@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 import re
 import requests
@@ -7,87 +8,123 @@ from utils import json_read
 
 ROOT = Path(__file__).parent.parent.resolve()
 
-DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a)?\d{3,4})')
+DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a|\?c|\?a)?(?P<year>\d{3,4}))')
 ENTRY_REGEX = re.compile(r'Entry/(\d+)\?')
+ENTRY_REGEX = re.compile(r'/dictionary/(\w+)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
 HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
 
+CENTURY_BANDS = {
+	'9th': (800, 900),
+	'10th': (900, 1000),
+	'11th': (1000, 1100),
+	'12th': (1100, 1200),
+	'13th': (1200, 1300),
+	'14th': (1300, 1400),
+	'15th': (1400, 1500),
+	'16th': (1500, 1600),
+	'17th': (1600, 1700),
+	'18th': (1700, 1800),
+	'19th': (1800, 1900),
+	'20th': (1900, 2000),
+}
 
-def remove_whitespace(text):
-	return ' '.join([line.replace('\xa0', ' ').strip() for line in text.split('\n')])
+BROAD_BANDS = {
+	'Old English': (800, 1150),
+	'Middle English': (1150, 1500),
+	'Early Modern English': (1500, 1710),
+	'Late Modern English': (1710, 2000),
+}
 
-def date_quotation(citation):
-	if date_extract := DATE_REGEX.match(citation):
-		if date_extract[0] == 'eOE':
-			return 800
-		if date_extract[0] == 'OE':
-			return 900
-		if date_extract[0] == 'lOE':
-			return 1000
-		if date_extract[0].startswith('c'):
-			return int(date_extract[0][1:])
-		if date_extract[0].startswith('a'):
-			return int(date_extract[0][1:])
-		return int(date_extract[0])
-	return False
-
-def save_oed_page(url):
-	if entry_id := ENTRY_REGEX.search(url):
-		entry_path = ROOT / 'data' / 'oed' / f'{entry_id[1]}.html'
-		if entry_path.exists():
-			return entry_id[1]
-		req = requests.get(url, headers=HEADERS)
-		with open(entry_path, 'w') as file:
-			file.write(req.text)
-		return entry_id[1]
-	raise ValueError('Invalid URL: Could not parse entry ID')
-
-def parse_forms(entry_id):
-	with open(ROOT / 'data' / 'oed' / f'{entry_id}.html') as file:
-		soup = BeautifulSoup(file, 'lxml')
-	forms = set()
-	forms_div = str(soup.find('div', class_='forms'))
-	if 'Plural.' in forms_div:
-		forms_div = forms_div.split('Plural.')[0]
-	for form_info in forms_div.split(','):
-		s = BeautifulSoup(form_info, 'lxml')
-		if 'error' in s.text:
-			continue # ignore (possible) transmission errors
-		if strong_form := s.find('strong'):
-			if form := WORD_REGEX.match(strong_form.text):
-				forms.add(form[0])
-	return list(forms)
-
-def parse_quotes(entry_id, forms):
-	with open(ROOT / 'data' / 'oed' / f'{entry_id}.html') as file:
-		soup = BeautifulSoup(file, 'lxml')
-	finds = []
-	for quote in soup.find_all("div", class_="quotation"):
+def normalize_date(text_date):
+	if date_extract := DATE_REGEX.match(text_date):
 		try:
-			cite = remove_whitespace(quote.find('span', class_='noIndent').text)
-			form = remove_whitespace(quote.find('span', class_='quotationKeyword').text)
+			return int(date_extract['year'])
 		except:
-			continue
-		if form in forms:
-			if date := date_quotation(cite):
-				finds.append((form, date))
-	return finds
+			if date_extract[0] == 'eOE':
+				return 800
+			if date_extract[0] == 'OE':
+				return 900
+			if date_extract[0] == 'lOE':
+				return 1000
+			print(f'Could not normalize date "{text_date}"')
+			return None
 
-def put_into_bands(finds, n_bands=12):
-	band_width = (2000 - 800) // n_bands
-	bands = {}
-	for start in range(800, 2000, band_width):
-		end = start + band_width - 1
-		bands[(start, end)] = set()
-	for form, date in finds:
-		for start, end in bands:
-			if date >= start and date <= end:
-				bands[start, end].add(form)
-				break
-	return bands
+
+class OEDLemma:
+
+	def __init__(self, lemma_id):
+		self.lemma_id = lemma_id
+		self.lemma_file = ROOT / 'data' / 'oed' / f'{lemma_id}.html'
+		if not self.lemma_file.exists():
+			self.lemma_page = self.download_lemma_page()
+		else:
+			self.lemma_page = self.open_lemma_page()
+		self.variants = self.extract_variants()
+		self.variant_parser = re.compile('|'.join(sorted(self.variants, key=lambda k: len(k), reverse=True)))
+		self.quotes = self.extract_quotes()
+
+	def download_lemma_page(self):
+		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
+		req = requests.get(url, headers=HEADERS)
+		with open(self.lemma_file, 'w') as file:
+			file.write(req.text)
+		return BeautifulSoup(req.text, 'lxml')
+
+	def open_lemma_page(self):
+		with open(self.lemma_file) as file:
+			text = file.read()
+		return BeautifulSoup(text, 'lxml')
+
+	def extract_variants(self):
+		variant_div = self.lemma_page.find('div', class_='variant-forms-subsection-v3')
+		if variant_div is None:
+			variant_div = self.lemma_page.find('section', id='variant-forms')
+		variants = variant_div.find_all('span', class_='variant-form')
+		return sorted([v.text for v in variants if WORD_REGEX.fullmatch(v.text)])
+
+	def extract_quotes(self):
+		variant_quote_map = defaultdict(list)
+		quotation_dates = self.lemma_page.find_all('div', class_='quotation-date')
+		quotation_bodies = self.lemma_page.find_all('div', class_='quotation-body')
+		for date, body in zip(quotation_dates, quotation_bodies):
+			date = normalize_date(date.text)
+			if date is None:
+				continue
+			try:
+				quote = body.find('blockquote').text
+			except:
+				continue
+			try:
+				keyword = body.find('mark').text
+			except:
+				continue
+
+			form = self.variant_parser.match(keyword)
+			if form is None:
+				continue
+			variant = form[0]
+
+			variant_quote_map[variant].append((date, quote))
+		return variant_quote_map
+
+	def classify_band(self, date):
+		for band, (start, end) in BROAD_BANDS.items():
+			if date >= start and date < end:
+				return band
+		return None
+
+	def classify(self):
+		data = {band: defaultdict(int) for band in BROAD_BANDS.keys()}
+		for variant, quotes in self.quotes.items():
+			for date, quote in quotes:
+				band = self.classify_band(date)
+				if band:
+					data[band][variant] += 1
+		pprint(data)
 
 
 
@@ -95,24 +132,11 @@ def put_into_bands(finds, n_bands=12):
 
 if __name__ == '__main__':
 
-	url = 'https://www.oed.com/view/Entry/86918?rskey=DfoOHz&result=1&isAdvanced=false#eid'
-	entry_id = save_oed_page(url)
+	from pprint import pprint
 
-	forms = parse_forms(entry_id)
-	finds = parse_quotes(entry_id, forms)
-
-	banded = put_into_bands(finds, 12)
-	for period, forms in banded.items():
-		print(period)
-		print(forms)
-
-	# hc_word_counts = json_read(ROOT / 'data' / 'hc_word_counts.json')
-
-
-	# for form in forms:
-	# 	count = hc_word_counts.get(form, 0)
-	# 	print(str(count).zfill(3), form)
-
+	lemma = OEDLemma('heart_n')
+	pprint(lemma.quotes)
+	lemma.classify()
 
 
 
