@@ -80,9 +80,7 @@ class OEDLemma:
 		return BeautifulSoup(text, 'lxml')
 
 	def extract_variants(self):
-		variant_div = self.lemma_page.find('div', class_='variant-forms-subsection-v3')
-		if variant_div is None:
-			variant_div = self.lemma_page.find('section', id='variant-forms')
+		variant_div = self.lemma_page.find('section', id='variant-forms')
 		variants = variant_div.find_all('span', class_='variant-form')
 		return sorted([v.text for v in variants if WORD_REGEX.fullmatch(v.text)])
 
@@ -124,7 +122,7 @@ class OEDLemma:
 				band = self.classify_band(date)
 				if band:
 					data[band][variant] += 1
-		pprint(data)
+		return data
 
 
 
@@ -132,11 +130,60 @@ class OEDLemma:
 
 if __name__ == '__main__':
 
-	from pprint import pprint
+	page = '''<!DOCTYPE HTML>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>OED Analysis</title>
+</head>
+<body>'''
 
-	lemma = OEDLemma('heart_n')
-	pprint(lemma.quotes)
-	lemma.classify()
+	lexemes = ['man_n1', 'god_n', 'king_n', 'lord_n', 'father_n', 'place_n1', 'brother_n', 'world_n', 'house_n1', 'child_n', 'woman_n', 'body_n', 'water_n', 'time_n', 'work_n', 'folk_n', 'word_n', 'grace_n', 'name_n', 'bishop_n', 'wife_n', 'life_n', 'son_n1', 'earth_n1', 'daughter_n', 'matter_n1', 'lady_n', 'master_n1', 'hand_n', 'knight_n', 'love_n1', 'church_n1', 'night_n', 'heart_n', 'mercy_n', 'duke_n', 'power_n1']
+
+
+	lemma_map = json_read('../data/lemma_map.json')
+	
+	for lexeme in lexemes:
+
+		page += f'<p><strong>{lexeme}</strong></p>'
+
+		table = '<table>\n'
+
+		headword = lexeme.split('_')[0]
+		hel_data = lemma_map[headword]
+
+		lemma = OEDLemma(lexeme)
+		oed_data = lemma.classify()
+
+		for period in ['Old English', 'Middle English', 'Early Modern English']:
+
+			table += f'<tr><td colspan=3><i>{period}</i></td></tr>\n'
+
+			combined_forms = sorted(list(set(list(hel_data[period].keys()) + list(oed_data[period].keys()))))
+			for form in combined_forms:
+				try:
+					hel_c = hel_data[period].get(form, '')
+				except KeyError:
+					hel_c = ''
+				try:
+					oed_c = oed_data[period].get(form, '')
+				except KeyError:
+					oed_c = ''
+				print(form, hel_c, oed_c)
+
+				table += f'<tr><td>{form}</td><td>{hel_c}</td><td>{oed_c}</td></tr>\n'
+
+
+		table += '</table>\n'
+		page += table
+
+		page += '''
+		</body>
+		</html>
+		'''
+
+	with open('/Users/jon/Desktop/output.html', 'w') as file:
+		file.write(page)
 
 
 
