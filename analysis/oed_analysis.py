@@ -9,9 +9,11 @@ from utils import json_read
 ROOT = Path(__file__).parent.parent.resolve()
 
 DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a|\?c|\?a)?(?P<year>\d{3,4}))')
-ENTRY_REGEX = re.compile(r'Entry/(\d+)\?')
 ENTRY_REGEX = re.compile(r'/dictionary/(\w+)')
-WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
+WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
+HEADER_EXCLUSIONS = re.compile(r'(plural|genitive|dative)', re.IGNORECASE)
+NOTE_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|inflected)', re.IGNORECASE)
+VARIANT_FORM_PARSER = re.compile(r'(?P<time>.+?)=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?')
 
 HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
@@ -64,7 +66,8 @@ class OEDLemma:
 		else:
 			self.lemma_page = self.open_lemma_page()
 		self.variants = self.extract_variants()
-		self.variant_parser = re.compile('|'.join(sorted(self.variants, key=lambda k: len(k), reverse=True)))
+		print(self.variants)
+		self.variant_parser = re.compile(r'\b' + '|'.join(sorted(self.variants, key=lambda k: len(k), reverse=True)) + r'\b')
 		self.quotes = self.extract_quotes()
 
 	def download_lemma_page(self):
@@ -79,10 +82,55 @@ class OEDLemma:
 			text = file.read()
 		return BeautifulSoup(text, 'lxml')
 
+	def extract_variant_forms(self, variant_section):
+		variants = []
+		for variant in variant_section.find_all('span', class_='variant-form'):
+			variant.string.replace_with(f'=[{variant.text}]=')
+		for candidate in VARIANT_FORM_PARSER.finditer(variant_section.text):
+			if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
+				continue
+			if WORD_REGEX.fullmatch(candidate['form']):
+				print(candidate['time'])
+				variants.append(candidate['form'])
+		return variants
+
 	def extract_variants(self):
-		variant_div = self.lemma_page.find('section', id='variant-forms')
-		variants = variant_div.find_all('span', class_='variant-form')
-		return sorted([v.text for v in variants if WORD_REGEX.fullmatch(v.text)])
+		variants = []
+		variant_section = self.lemma_page.find('section', id='variant-forms')
+
+		variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v1')
+		if not variant_subsections:
+			variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v2')
+		if not variant_subsections:
+			variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v3')
+
+		if not variant_subsections:
+			variants.extend(self.extract_variant_forms(variant_section))
+		else:
+			for variant_subsection in variant_subsections:
+				header = variant_subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
+				if header and HEADER_EXCLUSIONS.search(header.text):
+					print('IGNORE', header.text)
+					continue
+
+				variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v1sub')
+				if not variant_subsubsections:
+					variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v2')
+				if not variant_subsubsections:
+					variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v3')
+					
+
+				if not variant_subsubsections:
+					variants.extend(self.extract_variant_forms(variant_subsection))
+				else:
+					for variant_subsubsection in variant_subsubsections:
+						header = variant_subsubsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
+						if header and HEADER_EXCLUSIONS.search(header.text):
+							print('IGNORE - ', header.text)
+							continue
+						variants.extend(self.extract_variant_forms(variant_subsubsection))
+						
+		return sorted(list(set(variants)))
 
 	def extract_quotes(self):
 		variant_quote_map = defaultdict(list)
@@ -116,7 +164,8 @@ class OEDLemma:
 		return None
 
 	def classify(self):
-		data = {band: defaultdict(int) for band in BROAD_BANDS.keys()}
+		data = {band: {f: 0 for f in self.variants} for band in BROAD_BANDS.keys()}
+		# data = {band: defaultdict(int) for band in BROAD_BANDS.keys()}
 		for variant, quotes in self.quotes.items():
 			for date, quote in quotes:
 				band = self.classify_band(date)
@@ -138,14 +187,16 @@ if __name__ == '__main__':
 </head>
 <body>'''
 
-	lexemes = ['man_n1', 'god_n', 'king_n', 'lord_n', 'father_n', 'place_n1', 'brother_n', 'world_n', 'house_n1', 'child_n', 'woman_n', 'body_n', 'water_n', 'time_n', 'work_n', 'folk_n', 'word_n', 'grace_n', 'name_n', 'bishop_n', 'wife_n', 'life_n', 'son_n1', 'earth_n1', 'daughter_n', 'matter_n1', 'lady_n', 'master_n1', 'hand_n', 'knight_n', 'love_n1', 'church_n1', 'night_n', 'heart_n', 'mercy_n', 'duke_n', 'power_n1']
+	lexemes = ['man_n1', 'god_n', 'duke_n', 'king_n', 'lord_n', 'father_n', 'place_n1', 'brother_n', 'world_n', 'house_n1', 'child_n', 'woman_n', 'body_n', 'water_n', 'time_n', 'work_n', 'folk_n', 'word_n', 'grace_n', 'name_n', 'bishop_n', 'wife_n', 'life_n', 'son_n1', 'earth_n1', 'daughter_n', 'matter_n1', 'lady_n', 'master_n1', 'hand_n', 'knight_n', 'love_n1', 'church_n1', 'night_n', 'heart_n', 'mercy_n', 'power_n1']
 
 
 	lemma_map = json_read('../data/lemma_map.json')
 	
-	for lexeme in lexemes:
+	for lexeme in lexemes[17:]:
 
-		page += f'<p><strong>{lexeme}</strong></p>'
+		print(lexeme)
+
+		page += f'<h2>{lexeme}</h2>'
 
 		table = '<table>\n'
 
@@ -157,7 +208,7 @@ if __name__ == '__main__':
 
 		for period in ['Old English', 'Middle English', 'Early Modern English']:
 
-			table += f'<tr><td colspan=3><i>{period}</i></td></tr>\n'
+			table += f'<tr><td colspan=3 style="line-height: 40px"><i>{period}</i></td></tr>\n'
 
 			combined_forms = sorted(list(set(list(hel_data[period].keys()) + list(oed_data[period].keys()))))
 			for form in combined_forms:
@@ -166,10 +217,9 @@ if __name__ == '__main__':
 				except KeyError:
 					hel_c = ''
 				try:
-					oed_c = oed_data[period].get(form, '')
+					oed_c = oed_data[period].get(form, '✘')
 				except KeyError:
 					oed_c = ''
-				print(form, hel_c, oed_c)
 
 				table += f'<tr><td>{form}</td><td>{hel_c}</td><td>{oed_c}</td></tr>\n'
 
@@ -182,9 +232,7 @@ if __name__ == '__main__':
 		</html>
 		'''
 
+		print('------------------------------------')
+
 	with open('/Users/jon/Desktop/output.html', 'w') as file:
 		file.write(page)
-
-
-
-
