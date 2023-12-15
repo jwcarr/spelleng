@@ -9,7 +9,6 @@ from utils import json_read
 ROOT = Path(__file__).parent.parent.resolve()
 
 DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a|\?c|\?a)?(?P<year>\d{3,4}))')
-ENTRY_REGEX = re.compile(r'/dictionary/(\w+)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
 HEADER_EXCLUSIONS = re.compile(r'(plural|genitive|dative)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|inflected)', re.IGNORECASE)
