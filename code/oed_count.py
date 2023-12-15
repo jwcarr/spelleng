@@ -1,89 +1,86 @@
-
-	def classify_band(self, date):
-		for (start, end), band in BROAD_BANDS.items():
-			if date >= start and date < end:
-				return band
-		return None
-
-	def classify(self):
-		data = {band: {f: 0 for f, s, e in self.variants} for period, band in BROAD_BANDS.items()}
-		for variant, quotes in self.quotes.items():
-			for date, quote in quotes:
-				band = self.classify_band(date)
-				if band:
-					data[band][variant] += 1
-		return data
+from pathlib import Path
+from utils import json_read, json_write
+import pandas as pd
 
 
+ROOT = Path(__file__).parent.parent.resolve()
 
+
+BROAD_BANDS = [
+	( 800, 1150, 'Old English'),
+	(1150, 1500, 'Middle English'),
+	(1500, 1710, 'Early Modern English'),
+	(1710, 2000, 'Late Modern English'),
+]
+
+NARROW_BANDS = [
+	( 800,  850, "Old English (I)"),
+	( 850,  950, "Old English (II)"),
+	( 950, 1050, "Old English (III)"),
+	(1050, 1150, "Old English (IV)"),
+	(1150, 1250, "Middle English (I)"),
+	(1250, 1350, "Middle English (II)"),
+	(1350, 1420, "Middle English (III)"),
+	(1420, 1500, "Middle English (IV)"),
+	(1500, 1570, "Early Modern English (I)"),
+	(1570, 1640, "Early Modern English (II)"),
+	(1640, 1710, "Early Modern English (III)"),
+	(1710, 1800, "Late Modern English (I)"),
+	(1800, 1900, "Late Modern English (II)"),
+	(1900, 2000, "Late Modern English (III)"),
+]
+
+
+def classify_band(year, classification_bands):
+	for start, end, band in classification_bands:
+		if year >= start and year < end:
+			return band
+	return None
+
+def classify_into_bands(lemma_quotation_data, classification_bands):
+	variant_counts_by_band = {}
+	for variant, quotations in lemma_quotation_data.items():
+		band_counts = {band: 0 for s, e, band in classification_bands}
+		for year, quote in quotations:
+			if band := classify_band(year, classification_bands):
+				band_counts[band] += 1
+		variant_counts_by_band[variant] = band_counts
+	return variant_counts_by_band
+
+def make_table(variant_counts_by_band, classification_bands):
+	table = []
+	for variant, counts_by_band in variant_counts_by_band.items():
+		counts = [counts_by_band[band] for s, e, band in classification_bands]
+		if sum(counts) > 0:
+			table.append(
+				[variant] + counts
+			)
+	table = pd.DataFrame(table)#, columns=['variant', 'OE', 'ME', 'EME', 'LME'])
+	return table
+
+
+def output(counts, classification_bands):
+	for lemma, variant_counts_by_band in counts.items():
+		table = make_table(variant_counts_by_band, classification_bands)
+		print(lemma)
+		print(table)
+		print('')
 
 
 if __name__ == '__main__':
 
-	page = '''<!DOCTYPE HTML>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>OED Analysis</title>
-</head>
-<body>'''
+	lemmata_file = ROOT / 'data' / 'lemmata.txt'
 
-	lexemes = ['man_n1', 'god_n', 'duke_n', 'king_n', 'lord_n', 'father_n', 'place_n1', 'brother_n', 'world_n', 'house_n1', 'child_n', 'woman_n', 'body_n', 'water_n', 'time_n', 'work_n', 'folk_n', 'word_n', 'grace_n', 'name_n', 'bishop_n', 'wife_n', 'life_n', 'son_n1', 'earth_n1', 'daughter_n', 'matter_n1', 'lady_n', 'master_n1', 'hand_n', 'knight_n', 'love_n1', 'church_n1', 'night_n', 'heart_n', 'mercy_n', 'power_n1']
+	with open(lemmata_file) as file:
+		lemmata = file.read()
+	lemmata = lemmata.split('\n')
 
+	counts = {}
+	for lemma in lemmata:
+		lemma_json_path = ROOT / 'data' / 'oed' / f'{lemma}.json'
+		lemma_quotation_data = json_read(lemma_json_path)
+		counts[lemma] = classify_into_bands(lemma_quotation_data, NARROW_BANDS)
 
-	# lexemes = ['life_n']
+	json_write(counts, ROOT / 'data' / 'oed_variant_counts.json')
 
-
-	lemma_map = json_read('../data/lemma_map.json')
-
-	periods = []
-	
-	for lexeme in lexemes[:]:
-
-		print(lexeme)
-
-		page += f'<h2>{lexeme}</h2>'
-
-		table = '<table>\n'
-
-		headword = lexeme.split('_')[0]
-		hel_data = lemma_map[headword]
-
-		lemma = OEDLemma(lexeme)
-		oed_data = lemma.classify()
-
-		periods.extend(lemma.periods)
-
-		for period in ['Old English', 'Middle English', 'Early Modern English']:
-
-			table += f'<tr><td colspan=3 style="line-height: 40px"><i>{period}</i></td></tr>\n'
-
-			combined_forms = sorted(list(set(list(hel_data[period].keys()) + list(oed_data[period].keys()))))
-			for form in combined_forms:
-				try:
-					hel_c = hel_data[period].get(form, '')
-				except KeyError:
-					hel_c = ''
-				try:
-					oed_c = oed_data[period].get(form, '✘')
-				except KeyError:
-					oed_c = ''
-
-				table += f'<tr><td>{form}</td><td>{hel_c}</td><td>{oed_c}</td></tr>\n'
-
-
-		table += '</table>\n'
-		page += table
-
-		page += '''
-		</body>
-		</html>
-		'''
-
-		print('------------------------------------')
-
-	with open('/Users/jon/Desktop/output.html', 'w') as file:
-		file.write(page)
-
-	with open('../data/periods.json', 'w') as file:
-		file.write(str(set(periods)))
+	output(counts, NARROW_BANDS)
