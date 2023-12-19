@@ -89,12 +89,12 @@ if __name__ == '__main__':
 
 	convert(
 		ROOT / 'data' / 'HC_XML_Master_v9f.xml',
-		ROOT / 'data' / 'helsinki_corpus.json',
+		ROOT / 'data' / 'helsinki_corpus_broad.json',
 		DATE_TO_BROAD_BAND,
 	)
 
 	convert(
 		ROOT / 'data' / 'HC_XML_Master_v9f.xml',
-		ROOT / 'data' / 'helsinki_corpus_subbanded.json',
+		ROOT / 'data' / 'helsinki_corpus_narrow.json',
 		DATE_TO_NARROW_BAND,
 	)
