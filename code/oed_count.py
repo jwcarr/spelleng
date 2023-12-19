@@ -79,8 +79,8 @@ if __name__ == '__main__':
 	for lemma in lemmata:
 		lemma_json_path = ROOT / 'data' / 'oed' / f'{lemma}.json'
 		lemma_quotation_data = json_read(lemma_json_path)
-		counts[lemma] = classify_into_bands(lemma_quotation_data, NARROW_BANDS)
+		counts[lemma] = classify_into_bands(lemma_quotation_data, BROAD_BANDS)
 
 	json_write(counts, ROOT / 'data' / 'oed_variant_counts.json')
 
-	output(counts, NARROW_BANDS)
+	output(counts, BROAD_BANDS)

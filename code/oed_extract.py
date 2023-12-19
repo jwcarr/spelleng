@@ -8,7 +8,7 @@ from utils import json_write
 
 DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a|\?c|\?a)?\??(?P<year>\d{3,4}))')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
-HEADER_EXCLUSIONS = re.compile(r'(plural|genitive|dative)', re.IGNORECASE)
+HEADER_EXCLUSIONS = re.compile(r'(plural|genitive|dative|abbreviation)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|inflected)', re.IGNORECASE)
 VARIANT_FORM_PARSER = re.compile(r'=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?')
 
@@ -16,6 +16,10 @@ VARIANT_FORM_PARSER = re.compile(r'=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?')
 HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
+
+
+class UnauthorizedAccess(Exception):
+	pass
 
 
 class OEDLemmaParser:
@@ -27,8 +31,8 @@ class OEDLemmaParser:
 		self.lemma_json_path = output_dir / f'{self.lemma_id}.json'
 		self.lemma_page = self.get_lemma_page()
 		self.variants = self.extract_variants()
-		self.quotes = self.extract_quotes()
-		self.variant_quote_map = self.create_variant_quote_map()
+		self.quotations = self.extract_quotations()
+		self.variants_to_quotations = self.create_mapping()
 
 	def get_lemma_page(self):
 		'''
@@ -46,9 +50,12 @@ class OEDLemmaParser:
 		'''
 		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
 		req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
+		lemma_page = BeautifulSoup(req.text, 'lxml')
+		if lemma_page.find('div', class_='paywallOptions'):
+			raise UnauthorizedAccess('No access to OED')
 		with open(self.lemma_html_path, 'w') as file:
 			file.write(req.text)
-		return BeautifulSoup(req.text, 'lxml')
+		return lemma_page
 
 	def open_lemma_page(self):
 		'''
@@ -58,16 +65,16 @@ class OEDLemmaParser:
 			text = file.read()
 		return BeautifulSoup(text, 'lxml')
 
-	def extract_variant_forms_table(self, variant_section):
+	def extract_variant_forms_table(self, section):
 		'''
-		From the OED table of variants, iterate over each row and extract the
+		Given an OED table of variants, iterate over each row and extract the
 		variants and time period during which those variants are attested.
 		Any notes provided alongide a variant (i.e. in parentheses) are
 		also extracted; if the notes contain banned terms (e.g. "genitive"),
 		the variant is ignored.
 		'''
 		variants = []
-		table = variant_section.find('ol')
+		table = section.find('ol')
 		for table_row in table.find_all('li'):
 			start = int(table_row['data-start-date'])
 			if start == 950:
@@ -82,76 +89,70 @@ class OEDLemmaParser:
 					variants.append((candidate['form'], start, end))
 		return variants
 
-	def extract_variant_forms_text(self, variant_section):
+	def extract_variant_forms_text(self, section):
 		'''
-		From an OED sentence style description of variants, extract the
-		variants, their notes, and their time descriptions.
+		Given an OED sentence style description of variants, extract the
+		variants and any associated notes. In these cases, it is difficult
+		to parse the time period that applies to a given variant, so we
+		just assume that each variant covers the entire 800-2000 period
+		and rely on the quotations to date things.
 		'''
-		start = 800
-		end = 2000
 		variants = []
-		for variant in variant_section.find_all('span', class_='variant-form'):
-			variant.string.replace_with(f'=[{variant.text}]=')
-		for candidate in VARIANT_FORM_PARSER.finditer(variant_section.text):
-			if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
-				continue
-			if WORD_REGEX.fullmatch(candidate['form']):
-				variants.append((candidate['form'], start, end))
+		start, end = 800, 2000
+		if candidate_variants := section.find_all('span', class_='variant-form'):
+			for variant in candidate_variants:
+				variant.string.replace_with(f'=[{variant.text}]=')
+			for candidate in VARIANT_FORM_PARSER.finditer(section.text):
+				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
+					continue
+				if WORD_REGEX.fullmatch(candidate['form']):
+					variants.append((candidate['form'], start, end))
 		return variants
 
-	def extract_variant_forms(self, variant_section):
+	def extract_variant_forms(self, section):
 		'''
-		Try to parse the table from the section. If this fails, fall back on
-		parsing the section as text. Many OED entries have not yet been
-		updated to the tabular format.
+		Each OED variant form section comes in one of two formats: a tabular
+		format or a flat text format. First we try to parse the section as
+		a table, but if this fails, we fall back on parsing it as text.
 		'''
 		try:
-			return self.extract_variant_forms_table(variant_section)
+			return self.extract_variant_forms_table(section)
 		except:
-			return self.extract_variant_forms_text(variant_section)
+			return self.extract_variant_forms_text(section)
+
+	def _extract_variants_recursive(self, section):
+		'''
+		Recursively expore the varient-forms part of the OED page to find
+		candidate sections that may contain variants. So long as the
+		section header does not contain an excluded term (e.g. "genitive"),
+		pass the section to extract_variant_forms().
+		'''
+		subsections = section.find_all('div', class_='variant-forms-subsection-v1')
+		if not subsections:
+			subsections = section.find_all('div', class_='variant-forms-subsection-v1sub')
+		if not subsections:
+			subsections = section.find_all('div', class_='variant-forms-subsection-v2')
+		if not subsections:
+			subsections = section.find_all('div', class_='variant-forms-subsection-v3')
+		if not subsections:
+			return self._temp_variants.extend(self.extract_variant_forms(section))
+		for subsection in subsections:
+			header = subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
+			if header and HEADER_EXCLUSIONS.search(header.text):
+				continue
+			self._extract_variants_recursive(subsection)
 
 	def extract_variants(self):
 		'''
-		Expore the varient-forms part of the OED page to find candidate
-		sections that may contain variants. So long as the section header
-		does not contain an excluded term (e.g. "genitive"), pass the
-		section to extract_variant_forms().
+		Extract variant forms from the varient-forms part of the OED page.
+		Then take the unique set and compile a regex for each one.
 		'''
-		variants = []
+		self._temp_variants = []
 		variant_section = self.lemma_page.find('section', id='variant-forms')
-
-		variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v1')
-		if not variant_subsections:
-			variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v2')
-		if not variant_subsections:
-			variant_subsections = variant_section.find_all('div', class_='variant-forms-subsection-v3')
-
-		if not variant_subsections:
-			variants.extend(self.extract_variant_forms(variant_section))
-		else:
-			for variant_subsection in variant_subsections:
-				header = variant_subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
-				if header and HEADER_EXCLUSIONS.search(header.text):
-					continue
-
-				variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v1sub')
-				if not variant_subsubsections:
-					variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v2')
-				if not variant_subsubsections:
-					variant_subsubsections = variant_subsection.find_all('div', class_='variant-forms-subsection-v3')
-
-				if not variant_subsubsections:
-					variants.extend(self.extract_variant_forms(variant_subsection))
-				else:
-					for variant_subsubsection in variant_subsubsections:
-						header = variant_subsubsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
-						if header and HEADER_EXCLUSIONS.search(header.text):
-							continue
-						variants.extend(self.extract_variant_forms(variant_subsubsection))
-
+		self._extract_variants_recursive(variant_section)
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
-			for variant, start, end in sorted(list(set(variants)))
+			for variant, start, end in sorted(list(set(self._temp_variants)))
 		]
 
 	def normalize_date_to_year(self, text_date):
@@ -171,7 +172,7 @@ class OEDLemmaParser:
 					return 1050
 		return None
 
-	def extract_quotes(self):
+	def extract_quotations(self):
 		'''
 		Find all quotations on the OED entry page. For each one, attempt to
 		(a) normalize the date, (b) extract the quotation text, and
@@ -209,12 +210,12 @@ class OEDLemmaParser:
 				return variant
 		return None
 
-	def create_variant_quote_map(self):
+	def create_mapping(self):
 		'''
 		Map each extracted quote onto an extracted variant.
 		'''
 		variant_quote_map = {variant: [] for variant, s, e, v in self.variants}
-		for year, keyword, quote in self.quotes:
+		for year, keyword, quote in self.quotations:
 			if variant := self.map_quote_to_variant(year, keyword, quote):
 				variant_quote_map[variant].append((year, quote))
 		for quotes in variant_quote_map.values():
@@ -222,10 +223,10 @@ class OEDLemmaParser:
 		return variant_quote_map
 
 	def save(self):
-		json_write(self.variant_quote_map, self.lemma_json_path)
+		json_write(self.variants_to_quotations, self.lemma_json_path)
 
 
-def main(lemmata_file, output_dir, delay=0, show_warnings=False):
+def main(lemmata_file, output_dir, start_from=0, delay=0, show_warnings=False):
 	from time import sleep
 
 	output_dir = Path(output_dir)
@@ -236,10 +237,18 @@ def main(lemmata_file, output_dir, delay=0, show_warnings=False):
 		lemmata = file.read()
 	lemmata = lemmata.split('\n')
 
-	for i, lemma in enumerate(lemmata):
+	for i, lemma in enumerate(lemmata[start_from:], start_from):
 		print(i, lemma)
-		oed_lemma_parser = OEDLemmaParser(lemma, output_dir, show_warnings=show_warnings)
-		oed_lemma_parser.save()
+
+		try:
+			oed_lemma_parser = OEDLemmaParser(lemma, output_dir, show_warnings=show_warnings)
+			oed_lemma_parser.save()
+		except UnauthorizedAccess:
+			print('Access to OED not authorized; stopping.')
+			exit()
+		except Exception as e:
+			print(f'Failed to parse {lemma}; continuing...')
+
 		sleep(delay)
 
 
@@ -250,8 +259,9 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('lemmata_file', action='store', type=str, help='txt file listing lemmata to extract/parse')
 	parser.add_argument('output_dir', action='store', type=str, help='directory to store extracted/parsed data')
+	parser.add_argument('--start', action='store', type=int, default=0, help='lemma number to start from')
 	parser.add_argument('--delay', action='store', type=int, default=0, help='delay (in seconds) between each lemma extraction/parsing')
 	parser.add_argument('--warnings', action='store_true', help='show parser warnings')
 	args = parser.parse_args()
 
-	main(args.lemmata_file, args.output_dir, args.delay, args.warnings)
+	main(args.lemmata_file, args.output_dir, args.start, args.delay, args.warnings)
