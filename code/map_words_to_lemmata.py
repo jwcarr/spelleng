@@ -31,13 +31,8 @@ def get_lemmata_for_word(word):
 		return []
 
 def maps_words_to_lemmata(words_file, lemmata_file, start_from=0, delay=0):
-	with open(words_file) as file:
-		words = file.read()
-	words = words.split('\n')
-
-	# words = json_read(words_file)
-	# words = [word for word in words.keys()]
-
+	words = json_read(words_file)
+	words = [word for word in words.keys()]
 	lemmata_file = lemmata_file.with_suffix('.txt')
 	for i, word in enumerate(words[start_from:], start_from):
 		lemmata = get_lemmata_for_word(word)
