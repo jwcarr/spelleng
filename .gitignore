@@ -1,8 +1,10 @@
 manuscript/
 analysis/
 private/
-data/oed/
 
-data/HC_XML_Master_v9f.xml
+data/helsinki/
+data/oed/
+data/clmet
 data/helsinki_corpus.json
 data/helsinki_corpus_subbanded.json
+data/corpus.json

@@ -25,9 +25,9 @@ NARROW_BANDS = [
 	(1500, 1570, "Early Modern English (I)"),
 	(1570, 1640, "Early Modern English (II)"),
 	(1640, 1710, "Early Modern English (III)"),
-	(1710, 1800, "Late Modern English (I)"),
-	(1800, 1900, "Late Modern English (II)"),
-	(1900, 2000, "Late Modern English (III)"),
+	(1710, 1780, "Late Modern English (I)"),
+	(1780, 1850, "Late Modern English (II)"),
+	(1850, 1920, "Late Modern English (III)"),
 ]
 
 
@@ -79,8 +79,8 @@ if __name__ == '__main__':
 	for lemma in lemmata:
 		lemma_json_path = ROOT / 'data' / 'oed' / f'{lemma}.json'
 		lemma_quotation_data = json_read(lemma_json_path)
-		counts[lemma] = classify_into_bands(lemma_quotation_data, BROAD_BANDS)
+		counts[lemma] = classify_into_bands(lemma_quotation_data, NARROW_BANDS)
 
 	json_write(counts, ROOT / 'data' / 'oed_variant_counts.json')
 
-	output(counts, BROAD_BANDS)
+	output(counts, NARROW_BANDS)
