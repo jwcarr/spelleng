@@ -5,16 +5,16 @@ from utils import json_read, json_write
 ROOT = Path(__file__).parent.parent.resolve()
 
 
-def extract_lemmata(corpus, taget_POS_rewrites, at_least_n_documents, excluded_tokens):
+def extract_lemmata(corpus, taget_POS_rewrites, at_least_n_length, at_least_n_documents):
 	word_freqs = {}
 	for band, documents in corpus.items():
 		if band.startswith('Late Modern English'):
 			for document_i, document in enumerate(documents):
 				document_id = f'{band} {document_i}'
 				for token in document['text'].split(' '):
-					if token in excluded_tokens:
-						continue
 					word, pos = token.split('_')
+					if len(word) < at_least_n_length:
+						continue
 					if pos in taget_POS_rewrites:
 						word_pos = f'{word}_{taget_POS_rewrites[pos]}'
 						if word_pos in word_freqs:
@@ -40,8 +40,8 @@ if __name__ == '__main__':
 	lemmata = extract_lemmata(
 		corpus,
 		taget_POS_rewrites={'nn': 'n', 'vb': 'v', 'jj': 'adj'},
+		at_least_n_length=3,
 		at_least_n_documents=3,
-		excluded_tokens=['be_vb', 'have_vb', 'do_vb'],
 	)
 
 	json_write(lemmata, ROOT / 'data' / 'lemmata.json')
