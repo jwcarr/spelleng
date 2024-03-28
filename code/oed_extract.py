@@ -3,10 +3,10 @@ from pathlib import Path
 import re
 import requests
 from bs4 import BeautifulSoup
-from utils import json_write
+import utils
 
 
-DATE_REGEX = re.compile(r'^((e|l)?OE)|^((c|a|\?c|\?a)?\??(?P<year>\d{3,4}))')
+DATE_REGEX = re.compile(r'^\[?(?P<period>(e|l)?OE)|^\[?(?P<year_with_approximator>(c|a|\?c|\?a)?\??(?P<year>\d{4}))')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
 HEADER_EXCLUSIONS = re.compile(r'(plural|genitive|dative|abbreviation)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|inflected)', re.IGNORECASE)
@@ -19,6 +19,9 @@ HTTP_REQUEST_HEADERS = {
 
 
 class UnauthorizedAccess(Exception):
+	pass
+
+class NoEntry(Exception):
 	pass
 
 
@@ -48,7 +51,7 @@ class OEDLemmaParser:
 		self.variants_to_quotations = self._create_mapping()
 
 	def save(self):
-		json_write(self.variants_to_quotations, self.lemma_json_path)
+		utils.json_write(self.variants_to_quotations, self.lemma_json_path)
 
 	def _download_lemma_page(self):
 		'''
@@ -57,6 +60,10 @@ class OEDLemmaParser:
 		'''
 		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
 		req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
+		if req.status_code == 404:
+			req = requests.get(url + '1', headers=HTTP_REQUEST_HEADERS)
+		if req.status_code != 200:
+			raise NoEntry('No entry found')
 		lemma_page = BeautifulSoup(req.text, 'lxml')
 		if lemma_page.find('div', class_='paywallOptions'):
 			raise UnauthorizedAccess('No access to OED')
@@ -169,14 +176,19 @@ class OEDLemmaParser:
 		'''
 		if date_extract := DATE_REGEX.match(text_date):
 			try:
-				return int(date_extract['year'])
+				year = int(date_extract['year'])
+				if 'a' in date_extract['year_with_approximator']:
+					year -= 10 # subtract 10 years if described as "ante"
+				return year
 			except:
-				if date_extract[0] == 'eOE':
+				if date_extract['period'] == 'eOE':
 					return 850
-				if date_extract[0] == 'OE':
+				if date_extract['period'] == 'OE':
 					return 950
-				if date_extract[0] == 'lOE':
+				if date_extract['period'] == 'lOE':
 					return 1050
+		if self.show_warnings:
+			print(f'  Could not normalize date "{text_date}"')
 		return None
 
 	def _extract_quotations(self):
@@ -189,18 +201,23 @@ class OEDLemmaParser:
 		quotes = []
 		quotation_dates = self.lemma_page.find_all('div', class_='quotation-date')
 		quotation_bodies = self.lemma_page.find_all('div', class_='quotation-body')
+		assert len(quotation_dates) == len(quotation_bodies)
 		for date, body in zip(quotation_dates, quotation_bodies):
 			year = self._normalize_date_to_year(date.text)
+			print(date.text, year)
 			if year is None:
-				if self.show_warnings:
-					print(f'  Could not normalize date "{date.text}"')
 				continue
 			try:
 				quote = body.find('blockquote').text
-				keyword = body.find('mark').text
 			except:
 				if self.show_warnings:
 					print(f'  Could not parse quote')
+				continue
+			try:
+				keyword = body.find('mark').text
+			except:
+				if self.show_warnings:
+					print(f'  No keyword in quotation')
 				continue
 			quotes.append((year, keyword, quote))
 		return quotes
@@ -230,18 +247,16 @@ class OEDLemmaParser:
 		return variant_quote_map
 
 
-def main(lemmata_file, output_dir, start_from=0, delay=0, show_warnings=False, access_only=False):
+def main(lemmata_file, output_dir, delay=0, show_warnings=False, access_only=False):
 	from time import sleep
 
 	output_dir = Path(output_dir)
 	if not output_dir.exists():
 		output_dir.mkdir()
 
-	with open(lemmata_file) as file:
-		lemmata = file.read()
-	lemmata = lemmata.split('\n')
+	lemmata = utils.json_read(lemmata_file)
 
-	for i, lemma in enumerate(lemmata[start_from:], start_from):
+	for i, lemma in enumerate(lemmata, 1):
 
 		sleep(delay)
 		
@@ -272,12 +287,17 @@ if __name__ == '__main__':
 	import argparse
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('lemmata_file', action='store', type=str, help='txt file listing lemmata to extract/parse')
+	parser.add_argument('lemmata_file', action='store', type=str, help='json file listing lemmata to extract/parse')
 	parser.add_argument('output_dir', action='store', type=str, help='directory to store extracted/parsed data')
-	parser.add_argument('--start', action='store', type=int, default=0, help='lemma number to start from')
 	parser.add_argument('--delay', action='store', type=int, default=0, help='delay (in seconds) between each lemma extraction/parsing')
 	parser.add_argument('--warnings', action='store_true', help='show parser warnings')
 	parser.add_argument('--access_only', action='store_true', help='show parser warnings')
 	args = parser.parse_args()
 
-	main(args.lemmata_file, args.output_dir, args.start, args.delay, args.warnings, args.access_only)
+	main(
+		args.lemmata_file,
+		args.output_dir,
+		delay=args.delay,
+		show_warnings=args.warnings,
+		access_only=args.access_only,
+	)
