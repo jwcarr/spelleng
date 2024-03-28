@@ -11,15 +11,15 @@ WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
 
 HELSINKI_BAND_MAPPING = {
-	'O1': 'Old English (I)',
-	'O2': 'Old English (II)',
+	'O1': 'Old English (I & II)',
+	'O2': 'Old English (I & II)',
 	'O3': 'Old English (III)',
 	'O4': 'Old English (IV)',
-	'O1/2': 'Old English (II)',
+	'O1/2': 'Old English (I & II)',
 	'O2/3': 'Old English (III)',
 	'O2/4': 'Old English (IV)',
 	'O3/4': 'Old English (IV)',
-	'OX/2': 'Old English (II)',
+	'OX/2': 'Old English (I & II)',
 	'OX/3': 'Old English (III)',
 	'OX/4': 'Old English (IV)',
 	'M1': 'Middle English (I)',
@@ -126,8 +126,7 @@ def count_corpus(corpus):
 if __name__ == '__main__':
 
 	corpus = {
-		"Old English (I)": [],
-		"Old English (II)": [],
+		"Old English (I & II)": [],
 		"Old English (III)": [],
 		"Old English (IV)": [],
 		"Middle English (I)": [],
