@@ -47,6 +47,9 @@ class OEDLemmaParser:
 		Parse the OED page.
 		'''
 		self.variants = self._extract_variants()
+		variant_forms = [v[0] for v in self.variants]
+		variant_forms.sort(key=lambda v: len(v), reverse=True)
+		self.any_variant_re = re.compile(r'\b(' + '|'.join(variant_forms) + r')\b', re.IGNORECASE)
 		self.quotations = self._extract_quotations()
 		self.variants_to_quotations = self._create_mapping()
 
@@ -136,7 +139,7 @@ class OEDLemmaParser:
 
 	def _extract_variants_recursive(self, section):
 		'''
-		Recursively expore the varient-forms part of the OED page to find
+		Recursively expore the variant-forms part of the OED page to find
 		candidate sections that may contain variants. So long as the
 		section header does not contain an excluded term (e.g. "genitive"),
 		pass the section to _extract_variant_forms().
@@ -158,7 +161,7 @@ class OEDLemmaParser:
 
 	def _extract_variants(self):
 		'''
-		Extract variant forms from the varient-forms part of the OED page.
+		Extract variant forms from the variant-forms part of the OED page.
 		Then take the unique set and compile a regex for each one.
 		'''
 		self._temp_variants = []
@@ -191,6 +194,21 @@ class OEDLemmaParser:
 			print(f'  Could not normalize date "{text_date}"')
 		return None
 
+	def _extract_quotation(self, quote_body):
+		try:
+			return quote_body.find('blockquote').text
+		except:
+			return None
+
+	def _extract_keyword(self, quote_body):
+		try:
+			return quote_body.find('mark').text
+		except:
+			candidate_keywords = list(set(self.any_variant_re.findall(quote_body.text)))
+			if len(candidate_keywords) == 1:
+				return candidate_keywords[0]
+			return None
+
 	def _extract_quotations(self):
 		'''
 		Find all quotations on the OED entry page. For each one, attempt to
@@ -203,23 +221,10 @@ class OEDLemmaParser:
 		quotation_bodies = self.lemma_page.find_all('div', class_='quotation-body')
 		assert len(quotation_dates) == len(quotation_bodies)
 		for date, body in zip(quotation_dates, quotation_bodies):
-			year = self._normalize_date_to_year(date.text)
-			print(date.text, year)
-			if year is None:
-				continue
-			try:
-				quote = body.find('blockquote').text
-			except:
-				if self.show_warnings:
-					print(f'  Could not parse quote')
-				continue
-			try:
-				keyword = body.find('mark').text
-			except:
-				if self.show_warnings:
-					print(f'  No keyword in quotation')
-				continue
-			quotes.append((year, keyword, quote))
+			if year := self._normalize_date_to_year(date.text):
+				if quote := self._extract_quotation(body):
+					if keyword := self._extract_keyword(body):
+						quotes.append((year, keyword, quote))
 		return quotes
 
 	def _map_quote_to_variant(self, year, keyword, quote):
