@@ -3,8 +3,10 @@ analysis/
 private/
 
 data/helsinki/
-data/oed/
-data/clmet
+data/clmet/
+data/oed_cache/
+data/oed_quotations/
+
 data/helsinki_corpus.json
 data/helsinki_corpus_subbanded.json
 data/corpus.json
