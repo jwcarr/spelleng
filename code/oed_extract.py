@@ -16,6 +16,7 @@ HEADER_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|abbreviation|2nd|
 NOTE_EXCLUSIONS = re.compile(r'(error|sic|plural|accusative|genitive|dative|inflected|participle|comparative|superlative|past|infinitive|subjunctive|imperative|2nd|3rd|adverb)', re.IGNORECASE)
 VARIANT_FORM_PARSER = re.compile(r'=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
+OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
 
 ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
 
@@ -120,12 +121,11 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				# if candidate['note']:
-				# 	self._log(f'tablenote > {candidate["note"]}')
-				if candidate['form'].endswith('(e'):
-					form_without_e = candidate['form'][:-2]
-					form_with_e = candidate['form'][:-2] + 'e'
-					candidate_forms = [form_without_e, form_with_e]
+				if OPTIONAL_FINAL_LETTER.match(candidate['form']):
+					optional_letter = candidate['form'][-1]
+					form_without_optional_letter = candidate['form'][:-2]
+					form_with_optional_letter = form_without_optional_letter + optional_letter
+					candidate_forms = [form_without_optional_letter, form_with_optional_letter]
 				else:
 					candidate_forms = [candidate['form']]
 				additional_candidates = []
@@ -164,12 +164,11 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(section_text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				# if candidate['note']:
-				# 	self._log('textnote > {candidate["note"]}')
-				if candidate['form'].endswith('(e'):
-					form_without_e = candidate['form'][:-2]
-					form_with_e = candidate['form'][:-2] + 'e'
-					candidate_forms = [form_without_e, form_with_e]
+				if OPTIONAL_FINAL_LETTER.match(candidate['form']):
+					optional_letter = candidate['form'][-1]
+					form_without_optional_letter = candidate['form'][:-2]
+					form_with_optional_letter = form_without_optional_letter + optional_letter
+					candidate_forms = [form_without_optional_letter, form_with_optional_letter]
 				else:
 					candidate_forms = [candidate['form']]
 				additional_candidates = []
