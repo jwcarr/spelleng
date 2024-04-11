@@ -5,7 +5,7 @@ private/
 data/helsinki/
 data/clmet/
 data/oed_cache/
-data/oed_quotations/
+data/oed_quotations*
 
 data/helsinki_corpus.json
 data/helsinki_corpus_subbanded.json

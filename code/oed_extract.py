@@ -15,12 +15,15 @@ WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNO
 HEADER_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|abbreviation|2nd|3rd|participle|past|comparative|superlative|infinitive|subjunctive|imperative)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|sic|plural|accusative|genitive|dative|inflected|participle|comparative|superlative|past|infinitive|subjunctive|imperative|2nd|3rd|adverb)', re.IGNORECASE)
 VARIANT_FORM_PARSER = re.compile(r'=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
-OPTIONAL_LETTERS = re.compile(r'\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
+OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 
+ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
 
 HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
+
+OED_MAPPING_OVERRIDE = {'firm_n': 'firm_n2'}
 
 
 class UnauthorizedAccess(Exception):
@@ -37,6 +40,7 @@ class OEDLemmaParser:
 		self.show_warnings = show_warnings
 		self.lemma_html_path = OED_CACHE_DIR / f'{self.lemma_id}.html'
 		self.variants_to_quotations = {}
+		self.headword_form = self.lemma_id.split('_')[0]
 
 	def access(self):
 		'''
@@ -72,7 +76,10 @@ class OEDLemmaParser:
 		Download the lemma's webpage from the OED and store a copy in the
 		output_dir. Return the BeautifulSoup parsing of the HTML.
 		'''
-		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
+		if self.lemma_id in OED_MAPPING_OVERRIDE:
+			url = f'https://www.oed.com/dictionary/{OED_MAPPING_OVERRIDE[self.lemma_id]}'
+		else:
+			url = f'https://www.oed.com/dictionary/{self.lemma_id}'
 		req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
 		if req.status_code == 404:
 			req = requests.get(url + '1', headers=HTTP_REQUEST_HEADERS)
@@ -113,8 +120,8 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				if candidate['note']:
-					self._log(f'tablenote > {candidate["note"]}')
+				# if candidate['note']:
+				# 	self._log(f'tablenote > {candidate["note"]}')
 				if candidate['form'].endswith('(e'):
 					form_without_e = candidate['form'][:-2]
 					form_with_e = candidate['form'][:-2] + 'e'
@@ -133,10 +140,10 @@ class OEDLemmaParser:
 						)
 				candidate_forms.extend(additional_candidates)
 				for candidate_form in candidate_forms:
+					if candidate_form.startswith('-'):
+						candidate_form = self._expand_alternate_suffix(candidate_form)
 					if WORD_REGEX.fullmatch(candidate_form):
 						variants.append((candidate_form.lower(), start, end))
-					elif candidate_form.startswith('-'):
-						print('POSSIBLE AFFIX VARIANT', candidate_form)
 		return variants
 
 	def _extract_variant_forms_text(self, section):
@@ -157,8 +164,8 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(section_text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				if candidate['note']:
-					self._log('textnote > {candidate["note"]}')
+				# if candidate['note']:
+				# 	self._log('textnote > {candidate["note"]}')
 				if candidate['form'].endswith('(e'):
 					form_without_e = candidate['form'][:-2]
 					form_with_e = candidate['form'][:-2] + 'e'
@@ -177,10 +184,10 @@ class OEDLemmaParser:
 						)
 				candidate_forms.extend(additional_candidates)
 				for candidate_form in candidate_forms:
+					if candidate_form.startswith('-'):
+						candidate_form = self._expand_alternate_suffix(candidate_form)
 					if WORD_REGEX.fullmatch(candidate_form):
 						variants.append((candidate_form.lower(), start, end))
-					elif candidate_form.startswith('-'):
-						print('POSSIBLE AFFIX VARIANT', candidate_form)
 		return variants
 
 	def _extract_variant_forms(self, section):
@@ -214,20 +221,33 @@ class OEDLemmaParser:
 			header = subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
 			if header and HEADER_EXCLUSIONS.search(header.text):
 				continue
-			if header:
-				self._log(f'headernote > {header.text}')
+			# if header:
+			# 	self._log(f'headernote > {header.text}')
 			self._extract_variants_recursive(subsection)
 
-	def _include_lemma_form_if_not_listed_as_variant(self):
+	def _include_headword_form_if_not_listed_as_variant(self):
 		'''
 		If the lemma headword form was not extracted from the variant forms
 		section, make sure it is included.
 		'''
-		lemma_form = self.lemma_id.split('_')[0]
 		for variant, start, end in self._temp_variants:
-			if variant == lemma_form:
+			if variant == self.headword_form:
 				return
-		self._temp_variants.append((lemma_form, 800, 2000))
+		self._temp_variants.append((self.headword_form, 800, 2000))
+
+	def _expand_alternate_suffix(self, candidate_form):
+		'''
+		If the OED lists a variant spelling like "-acoun" for a word
+		like "consideration", expand the variant to its full form
+		(i.e., "consideracion"). To do this, we take the first letter of
+		the variant suffix (e.g. "a") and find the last occurance on
+		an "a" in the headword form and make the replacement.
+		'''
+		alt_suffix = candidate_form[1:]
+		try:
+			return re.sub(ALT_SUFFIX_FORMS[candidate_form], alt_suffix, self.headword_form)
+		except Exception:
+			return candidate_form
 
 	def _extract_variants(self):
 		'''
@@ -238,7 +258,7 @@ class OEDLemmaParser:
 		variant_section = self.lemma_page.find('section', id='variant-forms')
 		if variant_section is not None:
 			self._extract_variants_recursive(variant_section)
-		self._include_lemma_form_if_not_listed_as_variant()
+		self._include_headword_form_if_not_listed_as_variant()
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
 			for variant, start, end in sorted(list(set(self._temp_variants)))
@@ -295,17 +315,17 @@ class OEDLemmaParser:
 		quotation_bodies = self.lemma_page.find_all('div', class_='quotation-body')
 		assert len(quotation_dates) == len(quotation_bodies)
 		for date, body in zip(quotation_dates, quotation_bodies):
-			if 'failiþ' in body.text:
-				print(1, body.text)
+			# if 'Corinthe' in body.text:
+			# 	print(1, body.text)
 			if year := self._normalize_date_to_year(date.text):
-				if 'failiþ' in body.text:
-					print(2, year)
+				# if 'Corinthe' in body.text:
+				# 	print(2, year)
 				if quote := self._extract_quotation(body):
-					if 'failiþ' in body.text:
-						print(3, quote)
+					# if 'Corinthe' in body.text:
+					# 	print(3, quote)
 					if keyword := self._extract_keyword(body):
-						if 'failiþ' in body.text:
-							print(4, keyword)
+						# if 'Corinthe' in body.text:
+						# 	print(4, year, keyword, quote)
 						quotes.add((year, keyword, quote))
 		return list(quotes)
 
@@ -317,7 +337,7 @@ class OEDLemmaParser:
 		If no variant is found, return None.
 		'''
 		for variant, start, end, variant_re in self.variants:
-			if year >= (start - 20) and year <= (end + 20) and variant_re.search(keyword):
+			if year >= (start - 70) and year <= (end + 70) and variant_re.search(keyword):
 				return variant
 		return None
 
@@ -327,25 +347,37 @@ class OEDLemmaParser:
 		'''
 		variant_quote_map = {variant: [] for variant, s, e, v in self.variants}
 		for year, keyword, quote in self.quotations:
-			if 'failiþ' in quote:
-				print(5, year, keyword, quote)
+			# if 'Corinthe' in quote:
+			# 	print(5, year, keyword, quote)
 			if variant := self._map_quote_to_variant(year, keyword, quote):
-				if 'failiþ' in quote:
-					print(6, variant)
+				# if 'Corinthe' in quote:
+				# 	print(6, variant, quote)
 				variant_quote_map[variant].append((year, quote))
 		for quotes in variant_quote_map.values():
 			quotes.sort()
 		return variant_quote_map
 
 
-def main(lemmata_file, output_dir, parse_only=False, show_warnings=False):
+def main(lemmata_file, output_dir, parse_only=False, show_warnings=False, start_from=None, stop_at=None):
+	
 	if not output_dir.exists():
 		output_dir.mkdir()
-	lemmata = utils.json_read(lemmata_file)
-	for i, lemma in enumerate(lemmata, 1):
+	
+	lemmata = list(utils.json_read(lemmata_file).keys())
+	
+	if start_from is None:
+		start_from = 0
+	if stop_at is None:
+		stop_at = len(lemmata)
+	
+	for lemma_i in range(start_from, stop_at):
+		lemma = lemmata[lemma_i]
+
 		if parse_only and not (OED_CACHE_DIR / f'{lemma}.html').exists():
 			continue
-		print(i, lemma)
+		
+		print(lemma_i, lemma)
+		
 		oed_lemma_parser = OEDLemmaParser(lemma, show_warnings=show_warnings)
 		try:
 			oed_lemma_parser.access()
@@ -371,6 +403,8 @@ if __name__ == '__main__':
 	parser.add_argument('output_dir', action='store', type=str, help='directory to store json output for each lemma')
 	parser.add_argument('--parse_only', action='store_true', help='do not attempt to download if unavailable')
 	parser.add_argument('--warnings', action='store_true', help='show parser warnings')
+	parser.add_argument('--start', action='store', type=int, help='lemma number to start from')
+	parser.add_argument('--stop', action='store', type=int, help='lemma number to stop at')
 	args = parser.parse_args()
 
 	main(
@@ -378,4 +412,6 @@ if __name__ == '__main__':
 		Path(args.output_dir),
 		parse_only=args.parse_only,
 		show_warnings=args.warnings,
+		start_from=args.start,
+		stop_at=args.stop,
 	)

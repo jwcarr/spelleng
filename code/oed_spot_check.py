@@ -42,8 +42,8 @@ def main(lemmata_file, quotations_dir, n_check_lemmata):
 		validation_lemma, lemma_path = choose_lemma(lemmata_subset, quotations_dir)
 		quotation_data = utils.json_read(lemma_path)
 		variant_counts = {variant: len(quotations) for variant, quotations in quotation_data.items()}
-		print(validation_lemma)
-		print(variant_counts)
+		print(validation_lemma.upper())
+		print(f"'{validation_lemma}': {variant_counts}")
 		subprocess.check_output(['open', '-a', 'Safari', f'file://{OED_CACHE_DIR}/{validation_lemma}.html'])
 		subprocess.check_output(['open', '-a', 'Sublime Text', lemma_path])
 		input()
