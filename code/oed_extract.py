@@ -123,7 +123,7 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				if OPTIONAL_FINAL_LETTER.match(candidate['form']):
+				if OPTIONAL_FINAL_LETTER.search(candidate['form']):
 					optional_letter = candidate['form'][-1]
 					form_without_optional_letter = candidate['form'][:-2]
 					form_with_optional_letter = form_without_optional_letter + optional_letter
@@ -166,7 +166,7 @@ class OEDLemmaParser:
 			for candidate in VARIANT_FORM_PARSER.finditer(section_text):
 				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 					continue
-				if OPTIONAL_FINAL_LETTER.match(candidate['form']):
+				if OPTIONAL_FINAL_LETTER.search(candidate['form']):
 					optional_letter = candidate['form'][-1]
 					form_without_optional_letter = candidate['form'][:-2]
 					form_with_optional_letter = form_without_optional_letter + optional_letter
