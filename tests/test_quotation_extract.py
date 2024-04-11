@@ -77,6 +77,34 @@ EXPECTED_COUNTS = {
 	'chill_adj': {'chele': 1, 'chil': 1, 'chill': 24, 'chyll': 1, 'shill': 2, 'schill': 2, 'schil': 1},
 	'dilate_v': {'deleate': 0, 'dilate': 1, 'dylate': 1, 'delate': 4},
 	'sarcophagus_n': {'sarcofagus': 1, 'sarcophagi': 3, 'sarcophagus': 10}, ### THIS NEEDS TO BE FIXED
+
+	# ROUND 4
+	'common_adj': {'coamon': 0, 'coman': 0, 'comen': 2, 'comin': 0, 'commen': 3, 'commene': 0, 'commin': 0, 'commine': 0, 'common': 217, 'commond': 0, 'commonde': 0, 'commone': 0, 'commonne': 0, 'commoun': 0, 'commound': 0, 'commoune': 1, 'commovne': 0, 'commown': 0, 'commowne': 1, 'commun': 4, 'commund': 0, 'commune': 7, 'commuyn': 1, 'commwn': 0, 'commyn': 1, 'commyne': 0, 'comon': 5, 'comone': 1, 'comonne': 0, 'comont': 0, 'comoun': 5, 'comound': 0, 'comoune': 0, 'comovn': 0, 'comovne': 0, 'comown': 0, 'comowne': 0, 'comun': 7, 'comune': 5, 'comuyn': 0, 'comvne': 1, 'comvwne': 0, 'comvyne': 0, 'comyn': 18, 'comyne': 1, 'comynne': 0, 'coummon': 0, 'covmon': 0, 'cowman': 0, 'cowmane': 0, 'cowmmoune': 0, 'cowmon': 0, 'cowmond': 0, 'cowmone': 0, 'cowmoun': 0, 'cowmoune': 0, 'cowmownd': 0, 'komune': 1, 'quomon': 0},
+	'idea_n': {'aideah': 0, 'idaea': 0, 'idaia': 0, 'idaya': 0, 'idea': 160, 'ideae': 1, 'ideah': 0, 'idear': 0, 'ideer': 0, 'ideie': 1, 'ydea': 1, 'ydeye': 0},
+	'result_n': {'resaltt': 1, 'result': 36},
+	'heavy_adj': {'evi': 0, 'evy': 0, 'havie': 0, 'havy': 1, 'hawy': 0, 'hawye': 0, 'hayvie': 0, 'heavie': 6, 'heavy': 235, 'heavye': 0, 'hefeg': 0, 'hefeȝ': 0, 'hefig': 0, 'hefiȝ': 2, 'heve': 0, 'hevey': 0, 'hevi': 0, 'hevy': 11, 'hevye': 1, 'hewy': 3, 'hæfig': 0},
+	'avoid_v': {'aduoyde': 0, 'advoid': 0, 'advoyde': 0, 'auoid': 3, 'auoide': 1, 'auoyd': 2, 'avoid': 16, 'avoide': 2, 'avoyde': 6, 'awode': 0, 'awoyde': 0},
+	'castle_n': {'caastel': 0, 'castel': 14, 'castele': 0, 'castell': 11, 'castelle': 0, 'castill': 0, 'castille': 0, 'castle': 41, 'castylle': 0, 'caystelle': 0, 'kastell': 0},
+	'sick_adj': {'seac': 0, 'seak': 1, 'seake': 1, 'sec': 1, 'seek': 3, 'seeke': 1, 'seik': 4, 'sek': 3, 'seke': 20, 'seoc': 3, 'seock': 0, 'seok': 0, 'seyk': 1, 'sic': 1, 'sick': 181, 'sicke': 23, 'sickk': 0, 'siec': 0, 'siek': 1, 'sieke': 0, 'sijk': 4, 'sijke': 0, 'sik': 3, 'sike': 5, 'suc': 0, 'syk': 1, 'syke': 6, 'sæc': 0},
+	'literary_adj': {'letterary': 0, 'literare': 1, 'literarie': 0, 'literary': 66, 'litterarie': 0, 'litterary': 1},
+	'liberal_adj': {'leberale': 0, 'leberall': 0, 'leberalle': 0, 'libberall': 0, 'liberaill': 0, 'liberal': 122, 'liberale': 0, 'liberall': 20, 'liberalle': 0, 'libral': 0, 'lyberal': 2, 'lyberall': 3, 'lyberalle': 0},
+	'absent_adj': {'absent': 78, 'absente': 2, 'apsent': 0, 'apseunt': 0},
+	'waste_n': {'vast': 0, 'vaste': 1, 'waast': 3, 'waist': 4, 'wast': 44, 'waste': 137, 'wayste': 0},
+	'egyptian_adj': {'egipcian': 1, 'egiptian': 0, 'egypcian': 0, 'egypcien': 0, 'egypcyan': 0, 'egyptian': 18, 'ægyptian': 1},
+	'approve_v': {'approove': 0, 'approuve': 0, 'approve': 15, 'aprove': 0},
+	'drama_n': {'drama': 76, 'drame': 0, 'dramma': 0},
+	'mission_n': {'mission': 124, 'missyon': 1},
+	'abrupt_adj': {'abrupt': 61, 'abrupte': 3},
+	'accordance_n': {'accordance': 30, 'accordans': 0, 'accordaunce': 3, 'acordance': 1, 'acordans': 0, 'acordaunce': 1, 'acordauns': 0, 'anecordans': 0},
+	'clumsy_adj': {'clomsey': 0, 'clumbsie': 1, 'clumsie': 3, 'clumsy': 14},
+	'discourage_v': {'descourage': 0, 'descouraige': 0, 'dischorage': 0, 'discoradge': 0, 'discorage': 1, 'discoridge': 0, 'discorrage': 0, 'discourage': 20, 'discourrage': 0, 'discowrage': 0, 'discurage': 0, 'dyscorage': 2, 'dyscourage': 1, 'dyscouraige': 0, 'dyscourrage': 0},
+	'admiralty_n': {'admeralitie': 0, 'admeraltie': 0, 'admeralty': 0, 'admiralite': 0, 'admiralitie': 0, 'admirality': 0, 'admiralte': 3, 'admiraltie': 4, 'admiralty': 57, 'admiraltye': 1, 'admyraltie': 0, 'admyralty': 0, 'ameralte': 0, 'amiralty': 0, 'amiraltye': 1, 'ammiraltie': 0, 'ammiralty': 0, 'amralte': 0, 'amraltie': 1, 'amralty': 0, 'amrelte': 1, 'amyralte': 0},
+	'terrify_v': {'tarrafy': 0, 'tarrify': 0, 'terefie': 0, 'terrefie': 0, 'terrefy': 0, 'terrefye': 0, 'terrifee': 0, 'terrifie': 3, 'terrify': 8, 'terrifye': 0, 'terryfie': 0, 'terryfy': 0, 'terryfye': 0, 'teryfie': 0, 'torrify': 0, 'turrivy': 0},
+	'cedar_n': {'cedar': 10, 'ceder': 1, 'cedir': 0, 'cedor': 0, 'cedre': 5, 'cedri': 0, 'cedur': 0, 'cedyr': 0, 'cyder': 0, 'cydyr': 1, 'sydyr': 0},
+	'drowned_adj': {'drownded': 1, 'drowned': 21},
+	'hostel_n': {'hostel': 11, 'hostell': 5, 'hostelle': 0, 'hostil': 1, 'hostle': 0, 'osteill': 1, 'ostel': 3, 'ostell': 0, 'osteyl': 0, 'ostle': 1},
+	'avouch_v': {'advouch': 0, 'auoch': 0, 'auouch': 6, 'auouche': 2, 'auowch': 1, 'avouch': 16, 'avouche': 1},
+	
 }
 
 
