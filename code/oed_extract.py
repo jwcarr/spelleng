@@ -140,7 +140,7 @@ class OEDLemmaParser:
 						)
 				candidate_forms.extend(additional_candidates)
 				for candidate_form in candidate_forms:
-					if candidate_form.startswith('-'):
+					if candidate_form.startswith('-') or candidate_form.endswith('-'):
 						candidate_form = self._expand_alternate_suffix(candidate_form)
 					if WORD_REGEX.fullmatch(candidate_form):
 						variants.append((candidate_form.lower(), start, end))
@@ -183,7 +183,7 @@ class OEDLemmaParser:
 						)
 				candidate_forms.extend(additional_candidates)
 				for candidate_form in candidate_forms:
-					if candidate_form.startswith('-'):
+					if candidate_form.startswith('-') or candidate_form.endswith('-'):
 						candidate_form = self._expand_alternate_suffix(candidate_form)
 					if WORD_REGEX.fullmatch(candidate_form):
 						variants.append((candidate_form.lower(), start, end))
@@ -242,7 +242,10 @@ class OEDLemmaParser:
 		the variant suffix (e.g. "a") and find the last occurance on
 		an "a" in the headword form and make the replacement.
 		'''
-		alt_suffix = candidate_form[1:]
+		if candidate_form.startswith('-'):
+			alt_suffix = candidate_form[1:]
+		else:
+			alt_suffix = candidate_form[:-1]
 		try:
 			return re.sub(ALT_SUFFIX_FORMS[candidate_form], alt_suffix, self.headword_form)
 		except Exception:
