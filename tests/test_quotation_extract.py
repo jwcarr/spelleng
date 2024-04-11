@@ -8,11 +8,6 @@ OED = DATA / 'oed_quotations'
 
 
 EXPECTED_COUNTS = {
-	'angle_v': {'angle': 6},
-	'angle_n': {'ancgel': 0, 'ancgil': 0, 'angel': 2, 'angell': 0, 'angil': 0, 'angle': 15, 'angul': 0, 'angylle': 1, 'hangle': 0, 'hangul': 0, 'ongel': 0, 'ongul': 1},
-	'life_n': {'hlif': 0, 'layf': 0, 'layffe': 0, 'lef': 0, 'lefe': 0, 'leif': 0, 'leife': 0, 'leive': 0, 'leue': 1, 'leyf': 0, 'lief': 5, 'liefe': 0, 'lieff': 0, 'lieiw': 0, 'lieve': 0, 'lif': 41, 'life': 690, 'liff': 2, 'liffe': 1, 'liif': 1, 'lijf': 7, 'lijfe': 0, 'liue': 19, 'liuf': 0, 'live': 0, 'liyf': 0, 'liyffe': 0, 'lyef': 0, 'lyefe': 0, 'lyeff': 0, 'lyf': 20, 'lyfe': 24, 'lyff': 4, 'lyffe': 3, 'lyfve': 0, 'lyif': 0, 'lyife': 0, 'lyiff': 0, 'lyue': 9, 'lyve': 4, 'lywe': 0, 'lyyf': 0},
-	'mind_n': {'maind': 0, 'maynd': 0, 'maynde': 0, 'meand': 0, 'meend': 0, 'meende': 1, 'meinde': 0, 'mend': 2, 'mende': 10, 'meynd': 0, 'meynde': 0, 'miend': 0, 'miende': 0, 'min': 2, 'mind': 434, 'minde': 50, 'mine': 0, 'muinde': 0, 'mund': 1, 'munde': 6, 'muynde': 6, 'myend': 1, 'myende': 1, 'myn': 1, 'mynd': 33, 'myndd': 0, 'myndde': 0, 'mynde': 133, 'myne': 2, 'myynde': 0},
-	
 	# ROUND 1
 	'moment_n': {'malmond': 0, 'mament': 0, 'mamonde': 0, 'mamont': 0, 'mamunt': 1, 'moment': 183, 'momente': 5, 'momentt': 0},
 	'soul_n': {'saal': 1, 'sal': 1, 'sale': 0, 'sall': 2, 'salle': 1, 'saoul': 1, 'sauel': 1, 'sauele': 0, 'sauell': 0, 'sauil': 0, 'sauill': 0, 'saul': 10, 'saule': 17, 'saulen': 3, 'saull': 5, 'saulle': 0, 'sauul': 0, 'sauwel': 0, 'sauwil': 0, 'sauwl': 0, 'savl': 0, 'savle': 0, 'savll': 0, 'sawal': 0, 'sawel': 0, 'sawele': 0, 'sawell': 0, 'sawil': 1, 'sawill': 0, 'sawl': 3, 'sawle': 22, 'sawll': 1, 'sawlle': 0, 'sawol': 1, 'sawul': 1, 'sawule': 0, 'sawyl': 0, 'seawl': 0, 'seole': 0, 'shoul': 2, 'showl': 0, 'soal': 1, 'soale': 0, 'soawle': 0, 'sol': 0, 'sole': 2, 'soll': 0, 'solle': 0, 'sooal': 0, 'sool': 0, 'soole': 0, 'sooll': 0, 'souel': 0, 'souell': 0, 'soul': 282, 'soule': 86, 'soull': 1, 'soulle': 0, 'souȝl': 0, 'souȝle': 0, 'sovle': 0, 'sowal': 0, 'sowel': 0, 'sowele': 0, 'sowell': 0, 'sowile': 0, 'sowl': 1, 'sowle': 13, 'sowll': 0, 'sowlle': 0, 'sowul': 0, 'sowyl': 0, 'sowyll': 1, 'sowylle': 0, 'soyle': 0, 'sæul': 0, 'sæule': 0, 'sæwl': 0, 'sæwle': 0, 'zaule': 2, 'zawl': 0, 'zoal': 0, 'zoule': 0},
@@ -26,24 +21,18 @@ EXPECTED_COUNTS = {
 	'princess_n': {'prences': 0, 'prencess': 0, 'prencis': 0, 'prenssis': 0, 'princeis': 0, 'princes': 6, 'princess': 60, 'princesse': 7, 'princis': 0, 'prinses': 0, 'prynces': 0, 'pryncesse': 3, 'pryncis': 0, 'pryncise': 0, 'prynsace': 1, 'pryyncesse': 0},
 	'learning_n': {'larnin': 1, 'learning': 33, 'leirning': 0, 'leorning': 0, 'leornung': 0, 'lerning': 1, 'lernyng': 6, 'lernynge': 3, 'lernyngh': 0, 'lernynghe': 1},
 	'amuse_v': {'ammuse': 1, 'ammuze': 0, 'amuse': 44, 'amuze': 1},
-	'sanction_n': {'sanction': 58},
-	'improper_adj': {'improper': 21},
 	'horn_n': {'heorn': 0, 'horn': 189, 'horne': 48, 'horun': 0},
 	'serenity_n': {'serenity': 19, 'serenitie': 3, 'serenyte': 1},
 	'clamour_n': {'clamor': 2, 'clamore': 1, 'clamour': 21, 'clamoure': 1, 'clamur': 1, 'clamure': 0},
 	'benefit_v': {'benefit': 3, 'benefited': 4}, ### THIS NEEDS TO BE FIXED
-	'construct_v': {'construct': 11},
-	'incorrect_adj': {'incorrect': 11},
-	'shorten_v': {'shorten': 31},
 	'sole_n': {'soal': 2, 'soale': 3, 'soile': 1, 'soille': 0, 'sole': 88, 'sool': 0, 'soole': 2, 'soul': 0, 'soule': 2, 'sowle': 0},
 	'loiter_v': {'leutere': 0, 'leutre': 0, 'lewtre': 0, 'loiter': 8, 'loitre': 0, 'loltre': 0, 'lotere': 0, 'lowtre': 0, 'loyeter': 0, 'loyter': 7, 'loytre': 0, 'loytron': 1},
 	'lancet_n': {'lancet': 7, 'lancette': 0, 'launcet': 0, 'launcette': 1, 'lawncette': 0, 'lawnset': 0},
-	'hydrant_n': {'hydrant': 3},
 
-	# Round 2
+	# ROUND 2
 	'man_n': {'mahn': 0, 'man': 600, 'mane': 2, 'mann': 7, 'manna': 2, 'manne': 3, 'maun': 0, 'min': 2, 'mon': 18, 'mone': 0, 'monn': 0, 'monna': 0, 'monne': 1, 'mun': 5},
 	'bear_v': {'bair': 0, 'baire': 1, 'bar': 5, 'bare': 18, 'bayr': 0, 'bayre': 0, 'bear': 186, 'beara': 0, 'beare': 60, 'bearre': 0, 'beear': 0, 'beer': 1, 'beere': 1, 'beir': 1, 'beire': 1, 'beoran': 0, 'beore': 1, 'ber': 9, 'beran': 6, 'bere': 42, 'berenn': 1, 'berre': 0, 'beyr': 0, 'beyre': 1, 'bieran': 0, 'biere': 0, 'biereð': 1, 'bierð': 0, 'biraþ': 0, 'bireð': 0, 'bireþ': 0, 'birð': 0, 'bore': 2, 'buere': 0, 'burr': 0, 'byran': 0, 'byrd': 0, 'byreþ': 0, 'byrð': 1, 'byrþ': 1, 'bæran': 0, 'bære': 1},
-	'fresh_adj': {'ferche': 0, 'ferchs': 0, 'fers': 0, 'fersc': 3, 'fersch': 1, 'fersche': 1, 'ferse': 0, 'fersse': 0, 'ffrech': 0, 'ffresh': 0, 'ffreshe': 0, 'firesc': 0, 'firsh': 0, 'fraiche': 1, 'fraish': 0, 'frash': 0, 'freash': 0, 'frech': 1, 'freche': 3, 'frechs': 0, 'frees': 0, 'freesch': 0, 'freis': 0, 'freisch': 3, 'freische': 0, 'freish': 0, 'freishe': 0, 'freissch': 1, 'freissh': 5, 'freisshe': 1, 'frersh': 0, 'fres': 1, 'fresch': 10, 'fresche': 13, 'fresh': 279, 'freshe': 10, 'fress': 0, 'fressch': 1, 'fressche': 1, 'fresse': 0, 'fressh': 8, 'fresshe': 14, 'freys': 0, 'freysche': 0, 'freysh': 0, 'freyshe': 0, 'freyss': 1, 'freyssche': 0, 'freyssh': 0, 'freysshe': 1, 'frosch': 1, 'frosche': 1, 'frossche': 0, 'frush': 0, 'fyrsh': 0, 'uerisse': 0, 'uers': 0, 'uersc': 1, 'uerse': 1, 'uersse': 0, 'veirss': 0, 'verhs': 0, 'versch': 0, 'verss': 2, 'versse': 1, 'vresse': 0, 'vreysch': 0},
+	'fresh_adj': {'ferche': 0, 'ferchs': 0, 'fers': 0, 'fersc': 3, 'fersch': 1, 'fersche': 1, 'ferse': 0, 'fersse': 0, 'ffrech': 0, 'ffresh': 0, 'ffreshe': 0, 'firesc': 0, 'firsh': 0, 'fraiche': 1, 'fraish': 0, 'frash': 0, 'freash': 0, 'frech': 1, 'freche': 3, 'frechs': 0, 'frees': 0, 'freesch': 0, 'freis': 0, 'freisch': 3, 'freische': 0, 'freish': 0, 'freishe': 0, 'freissch': 1, 'freissh': 5, 'freisshe': 1, 'frersh': 0, 'fres': 1, 'fresch': 10, 'fresche': 13, 'fresh': 279, 'freshe': 10, 'fress': 0, 'fressch': 1, 'fressche': 1, 'fresse': 0, 'fressh': 9, 'fresshe': 14, 'freys': 0, 'freysche': 0, 'freysh': 0, 'freyshe': 0, 'freyss': 1, 'freyssche': 0, 'freyssh': 0, 'freysshe': 1, 'frosch': 1, 'frosche': 1, 'frossche': 0, 'frush': 0, 'fyrsh': 0, 'uerisse': 0, 'uers': 0, 'uersc': 1, 'uerse': 1, 'uersse': 0, 'veirss': 0, 'verhs': 0, 'versch': 0, 'verss': 2, 'versse': 1, 'vresse': 0, 'vreysch': 0},
 	'motion_n': {'mocien': 0, 'mocion': 7, 'mocione': 1, 'mocioun': 18, 'mocioune': 1, 'mocyon': 5, 'mocyone': 1, 'mocyoun': 2, 'moecion': 0, 'moscyoun': 1, 'moshon': 0, 'mosion': 0, 'mosioun': 0, 'motion': 177, 'motione': 3, 'motioun': 4, 'motioune': 0, 'motiown': 0, 'motiun': 0, 'motyon': 1},
 	'fatal_adj': {'fatal': 44, 'fatall': 20, 'fatell': 1, 'fathel': 1},
 	'credit_n': {'cradeit': 0, 'creadid': 0, 'creadit': 0, 'creaditte': 0, 'creadyt': 0, 'creadyte': 0, 'creddit': 0, 'creddite': 0, 'credeit': 0, 'credick': 0, 'credict': 0, 'credik': 0, 'credit': 294, 'credite': 22, 'creditt': 5, 'creditte': 1, 'credyt': 1, 'credyte': 3, 'credytt': 0, 'credytte': 0, 'creedet': 0, 'cridet': 0, 'crydet': 0, 'crydett': 1, 'crydite': 0},
@@ -59,13 +48,35 @@ EXPECTED_COUNTS = {
 	'lunch_n': {'lonche': 1, 'lunch': 1},
 	'deposit_n': {'deposit': 33, 'deposite': 6},
 	'purport_n': {'pourport': 0, 'purport': 18, 'purporte': 3, 'purportie': 0, 'purpurt': 0},
-	'strenuous_adj': {'strenuous': 41},
-	'underhand_adj': {'underhand': 17},
 	'habitable_adj': {'abitable': 1, 'habitable': 6},
-	'inquietude_n': {'inquietude': 15},
 	'coquettish_adj': {'coquetish': 2, 'coquettish': 8},
-	'ineffaceable_adj': {'ineffaceable': 3},
 	'creel_n': {'crail': 0, 'creel': 10, 'creele': 1, 'creil': 0, 'creill': 1, 'creille': 0, 'crele': 1, 'crelle': 1, 'kreil': 0, 'krele': 0},
+
+	# ROUND 3
+	'life_n': {'hlif': 0, 'layf': 0, 'layffe': 0, 'lef': 0, 'lefe': 0, 'leif': 0, 'leife': 0, 'leive': 0, 'leue': 1, 'leyf': 0, 'lief': 5, 'liefe': 0, 'lieff': 0, 'lieiw': 0, 'lieve': 0, 'lif': 41, 'life': 690, 'liff': 2, 'liffe': 1, 'liif': 1, 'lijf': 7, 'lijfe': 0, 'liue': 19, 'liuf': 0, 'live': 0, 'liyf': 0, 'liyffe': 0, 'lyef': 0, 'lyefe': 0, 'lyeff': 0, 'lyf': 20, 'lyfe': 24, 'lyff': 4, 'lyffe': 3, 'lyfve': 0, 'lyif': 0, 'lyife': 0, 'lyiff': 0, 'lyue': 9, 'lyve': 4, 'lywe': 0, 'lyyf': 0},
+	'leave_v': {'hlæfan': 0, 'lae': 0, 'laeve': 0, 'laif': 0, 'laiff': 0, 'laiue': 0, 'laive': 0, 'laue': 0, 'lave': 1, 'lawe': 0, 'lay': 0, 'layf': 0, 'layve': 0, 'le': 0, 'lea': 1, 'leab': 0, 'leabe': 0, 'leaf': 0, 'leafe': 0, 'leaff': 0, 'leaue': 47, 'leav': 1, 'leave': 246, 'leavy': 0, 'leawe': 0, 'lebe': 0, 'lee': 0, 'leeav': 0, 'leeave': 0, 'leef': 3, 'leefe': 0, 'leeue': 1, 'leeve': 2, 'lef': 7, 'lefe': 2, 'leff': 1, 'leffe': 1, 'lefue': 0, 'lefve': 0, 'leif': 4, 'leife': 0, 'leiff': 0, 'leiue': 0, 'leiv': 0, 'leive': 0, 'leiwe': 0, 'leov': 0, 'leue': 36, 'lev': 0, 'leve': 7, 'levin': 0, 'lewe': 0, 'lewiff': 0, 'ley': 0, 'leyf': 0, 'leyfe': 0, 'leyff': 0, 'leyffe': 0, 'leyiff': 0, 'leyve': 1, 'li': 0, 'liave': 0, 'lieav': 0, 'lief': 0, 'lieff': 0, 'liue': 0, 'live': 0, 'liwe': 0, 'loave': 0, 'luf': 0, 'luif': 0, 'lye': 0, 'lyue': 0, 'lyve': 0, 'læfan': 0, 'læfe': 0, 'læue': 0},
+	'open_adj': {'aipen': 0, 'apen': 0, 'apin': 0, 'apne': 0, 'appen': 0, 'appin': 0, 'appne': 0, 'appyn': 0, 'hopen': 0, 'hoppyne': 0, 'hopun': 0, 'hopyn': 0, 'hopyne': 0, 'hopynne': 0, 'oopen': 0, 'open': 545, 'opene': 8, 'openn': 4, 'openne': 0, 'opin': 5, 'opine': 1, 'opinn': 0, 'opne': 0, 'opon': 3, 'opone': 0, 'opoun': 2, 'oppen': 1, 'oppin': 6, 'oppine': 1, 'oppon': 1, 'oppyn': 2, 'oppyne': 0, 'opun': 0, 'opune': 0, 'opvn': 0, 'opyn': 12, 'opyne': 1, 'opynne': 0, 'upon': 1, 'vpen': 0, 'vpon': 1, 'vppin': 0},
+	'mind_n': {'maind': 0, 'maynd': 0, 'maynde': 0, 'meand': 0, 'meend': 0, 'meende': 1, 'meinde': 0, 'mend': 2, 'mende': 10, 'meynd': 0, 'meynde': 0, 'miend': 0, 'miende': 0, 'min': 2, 'mind': 434, 'minde': 50, 'mine': 0, 'muinde': 0, 'mund': 1, 'munde': 6, 'muynde': 6, 'myend': 1, 'myende': 1, 'myn': 1, 'mynd': 33, 'myndd': 0, 'myndde': 0, 'mynde': 133, 'myne': 2, 'myynde': 0},
+	'worthy_adj': {'uirthie': 0, 'virdie': 0, 'vorchty': 0, 'vordie': 0, 'vordy': 0, 'vorthi': 0, 'vorthie': 0, 'vorthty': 0, 'vorthy': 0, 'vurthye': 0, 'werthy': 1, 'whorthy': 0, 'whurthy': 0, 'wirdie': 1, 'wirdy': 0, 'wirthi': 0, 'wirthie': 0, 'wirthy': 0, 'wirtie': 0, 'woordye': 0, 'woorthie': 5, 'woorthy': 8, 'woorthye': 2, 'worchty': 0, 'worddie': 0, 'worde': 1, 'wordie': 0, 'wordy': 17, 'wordye': 0, 'worethi': 0, 'woriþi': 0, 'worthe': 1, 'worthee': 0, 'worthethy': 0, 'worthey': 0, 'worthi': 14, 'worthie': 22, 'worthti': 0, 'worthty': 0, 'worthy': 270, 'worthye': 4, 'wortie': 0, 'wortþi': 1, 'worþei': 1, 'worþi': 17, 'worþie': 1, 'worþy': 8, 'wourde': 0, 'wourdie': 0, 'wourthi': 0, 'wourthie': 1, 'wourthy': 1, 'wourþy': 1, 'wrþi': 1, 'wrþy': 0, 'wurdie': 0, 'wurdy': 0, 'wurrþi': 2, 'wurthi': 3, 'wurthy': 1, 'wurði': 3, 'wurþi': 0, 'wurþig': 0, 'wurþy': 3, 'wyrþig': 0},
+	'confidence_n': {'confidence': 67, 'confidens': 0},
+	'resolution_n': {'resollowtioune': 0, 'resollution': 0, 'resolucion': 4, 'resolucioun': 6, 'resolucioune': 1, 'resolucyon': 2, 'resolucyoun': 2, 'resolution': 187, 'resolutione': 1, 'resolutioun': 0, 'resolutioune': 0, 'resolvtion': 1, 'resolwsion': 0},
+	'sympathy_n': {'sympathie': 7, 'sympathy': 40, 'simpathy': 3},
+	'moon_n': {'meean': 0, 'meen': 0, 'meun': 0, 'meunn': 0, 'meyun': 0, 'min': 1, 'miun': 0, 'mon': 1, 'mona': 7, 'mone': 42, 'monne': 0, 'monæ': 0, 'mooin': 0, 'moon': 118, 'moone': 32, 'moune': 0, 'movne': 0, 'mowne': 0, 'moyn': 2, 'moyne': 1, 'muin': 0, 'mune': 2, 'mvne': 0, 'mwne': 0, 'myun': 0},
+	'eloquence_n': {'elloquence': 0, 'eloquence': 24, 'eloquens': 1},
+	'latin_adj': {'laten': 0, 'latin': 61, 'latine': 14, 'latten': 1, 'lattin': 0, 'latyn': 6, 'latyne': 0, 'latyng': 1},
+	'illustrious_adj': {'illustrious': 21, 'illustrous': 0, 'illustruows': 1},
+	'gross_adj': {'groce': 2, 'groiss': 0, 'groos': 4, 'groose': 0, 'gros': 4, 'grose': 8, 'gross': 158, 'grosse': 88, 'grouse': 1},
+	'vivacity_n': {'vivacite': 1, 'vivacitie': 3, 'vivacity': 53, 'vivassity': 1},
+	'discuss_v': {'discus': 2, 'discuse': 2, 'discuss': 22, 'discusse': 15, 'diskousse': 0, 'disscuss': 0, 'dyscus': 2, 'dyscusse': 2},
+	'plague_n': {'plaage': 0, 'plaague': 0, 'plag': 0, 'plage': 15, 'plaghe': 0, 'plague': 96, 'plaidge': 0, 'plaig': 1, 'plaige': 0, 'plaigue': 0, 'plaug': 0, 'plauge': 0, 'plawgh': 0, 'plawghe': 0, 'playe': 0, 'pleag': 0, 'pleague': 0, 'pleawge': 0, 'pleg': 1, 'plege': 0, 'ploge': 1},
+	'grove_n': {'grave': 0, 'grawe': 0, 'groave': 0, 'grof': 0, 'grofe': 0, 'grove': 13},
+	'loan_n': {'lan': 1, 'lane': 5, 'layne': 1, 'loan': 17, 'loane': 5, 'lon': 1, 'londe': 1, 'lone': 10, 'lonne': 1, 'loon': 0, 'loone': 5, 'lowne': 1, 'loyane': 0},
+	'angle_n': {'ancgel': 0, 'ancgil': 0, 'angel': 2, 'angell': 0, 'angil': 0, 'angle': 15, 'angul': 0, 'angylle': 1, 'hangle': 0, 'hangul': 0, 'ongel': 0, 'ongul': 1},
+	'revenge_v': {'rawenge': 0, 'reuange': 0, 'reueng': 0, 'reuenge': 19, 'revainge': 0, 'revange': 0, 'reveing': 0, 'revendge': 0, 'reveng': 0, 'revenge': 41, 'reving': 0, 'reweng': 0},
+	'appease_v': {'apaise': 0, 'apayse': 0, 'apeace': 0, 'apease': 2, 'apees': 1, 'apeese': 0, 'apeise': 0, 'apese': 5, 'appaise': 0, 'appayse': 1, 'appayze': 0, 'appease': 17, 'appese': 1},
+	'chill_adj': {'chele': 1, 'chil': 1, 'chill': 24, 'chyll': 1, 'shill': 2, 'schill': 2, 'schil': 1},
+	'dilate_v': {'deleate': 0, 'dilate': 1, 'dylate': 1, 'delate': 4},
+	'sarcophagus_n': {'sarcofagus': 1, 'sarcophagi': 3, 'sarcophagus': 10}, ### THIS NEEDS TO BE FIXED
 }
 
 
