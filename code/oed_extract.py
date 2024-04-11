@@ -33,6 +33,8 @@ class UnauthorizedAccess(Exception):
 class NoEntry(Exception):
 	pass
 
+class NoVariantForms(Exception):
+	pass
 
 class OEDLemmaParser:
 
@@ -258,8 +260,11 @@ class OEDLemmaParser:
 		'''
 		self._temp_variants = []
 		variant_section = self.lemma_page.find('section', id='variant-forms')
-		if variant_section is not None:
-			self._extract_variants_recursive(variant_section)
+		if variant_section is None:
+			raise NoVariantForms('No variant forms section')
+		self._extract_variants_recursive(variant_section)
+		if len(self._temp_variants) == 0:
+			raise NoVariantForms('No variant forms found')
 		self._include_headword_form_if_not_listed_as_variant()
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
