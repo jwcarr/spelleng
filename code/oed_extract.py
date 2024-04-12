@@ -43,7 +43,7 @@ class OEDLemmaParser:
 		self.show_warnings = show_warnings
 		self.lemma_html_path = OED_CACHE_DIR / f'{self.lemma_id}.html'
 		self.variants_to_quotations = {}
-		self.headword_form = self.lemma_id.split('_')[0]
+		self.headword_form, self.pos = self.lemma_id.split('_')
 
 	def access(self):
 		'''
@@ -59,6 +59,7 @@ class OEDLemmaParser:
 		'''
 		Parse the OED page.
 		'''
+		self.variant_rejector = self._create_variant_rejector()
 		self.variants = self._extract_variants()
 		variant_forms = [v[0] for v in self.variants]
 		variant_forms.sort(key=lambda v: len(v), reverse=True)
@@ -103,6 +104,58 @@ class OEDLemmaParser:
 			text = file.read()
 		return BeautifulSoup(text, 'lxml')
 
+	def _create_variant_rejector(self):
+		if self.pos == 'n':
+			if self.headword_form.endswith('us'):
+				return re.compile(r'\b(' + self.headword_form[:-2] + r'i|' + self.headword_form + r'es)\b')
+			elif self.headword_form.endswith('on'):
+				return re.compile(r'\b(' + self.headword_form[:-2] + r'a|' + self.headword_form + r's)\b')
+			elif self.headword_form.endswith('a'):
+				return re.compile(r'\b(' + self.headword_form + r'e|' + self.headword_form + r's)\b')
+			elif self.headword_form.endswith(('ch', 'sh', 's', 'x', 'z')):
+				return re.compile(r'\b' + self.headword_form + r'(es)\b')
+		elif self.pos == 'v':
+			if self.headword_form.endswith('y'):
+				return re.compile(r'\b(' + self.headword_form[:-1] + r'ied|' + self.headword_form + r'ed)\b')
+			else:
+				return re.compile(r'\b' + self.headword_form + r'(ing|ed)\b')
+		elif self.pos == 'adj':
+			if self.headword_form.endswith('e'):
+				return re.compile(r'\b' + self.headword_form + r'(st|r)\b')
+			else:
+				return re.compile(r'\b' + self.headword_form + r'(est|er)\b')
+		return None
+
+	def _evaluate_candidate(self, candidate, start, end):
+		if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
+			return
+		if OPTIONAL_FINAL_LETTER.search(candidate['form']):
+			optional_letter = candidate['form'][-1]
+			form_without_optional_letter = candidate['form'][:-2]
+			form_with_optional_letter = form_without_optional_letter + optional_letter
+			candidate_forms = [form_without_optional_letter, form_with_optional_letter]
+		else:
+			candidate_forms = [candidate['form']]
+		additional_candidates = []
+		for candidate_form in candidate_forms:
+			if optional_match := OPTIONAL_LETTERS.fullmatch(candidate_form):
+				letter = optional_match['letter']
+				additional_candidates.append(
+					candidate_form.replace(f'({letter})', letter)
+				)
+				additional_candidates.append(
+					candidate_form.replace(f'({letter})', '')
+				)
+		candidate_forms.extend(additional_candidates)
+		for candidate_form in candidate_forms:
+			if candidate_form.startswith('-') or candidate_form.endswith('-'):
+				candidate_form = self._expand_alternate_suffix(candidate_form)
+			if self.variant_rejector and self.variant_rejector.fullmatch(candidate_form):
+				print('REJECTED VARIANT', self.headword_form, candidate_form)
+				return
+			if WORD_REGEX.fullmatch(candidate_form):
+				self._temp_variants.append((candidate_form.lower(), start, end))
+
 	def _extract_variant_forms_table(self, section):
 		'''
 		Given an OED table of variants, iterate over each row and extract the
@@ -111,7 +164,6 @@ class OEDLemmaParser:
 		also extracted; if the notes contain banned terms (e.g. "genitive"),
 		the variant is ignored.
 		'''
-		variants = []
 		table = section.find('ol')
 		for table_row in table.find_all('li'):
 			start = int(table_row['data-start-date'])
@@ -121,32 +173,7 @@ class OEDLemmaParser:
 			for variant in table_row.find_all('span', class_='variant-form'):
 				variant.string.replace_with(f'=[{variant.text}]=')
 			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
-				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
-					continue
-				if OPTIONAL_FINAL_LETTER.search(candidate['form']):
-					optional_letter = candidate['form'][-1]
-					form_without_optional_letter = candidate['form'][:-2]
-					form_with_optional_letter = form_without_optional_letter + optional_letter
-					candidate_forms = [form_without_optional_letter, form_with_optional_letter]
-				else:
-					candidate_forms = [candidate['form']]
-				additional_candidates = []
-				for candidate_form in candidate_forms:
-					if optional_match := OPTIONAL_LETTERS.fullmatch(candidate_form):
-						letter = optional_match['letter']
-						additional_candidates.append(
-							candidate_form.replace(f'({letter})', letter)
-						)
-						additional_candidates.append(
-							candidate_form.replace(f'({letter})', '')
-						)
-				candidate_forms.extend(additional_candidates)
-				for candidate_form in candidate_forms:
-					if candidate_form.startswith('-') or candidate_form.endswith('-'):
-						candidate_form = self._expand_alternate_suffix(candidate_form)
-					if WORD_REGEX.fullmatch(candidate_form):
-						variants.append((candidate_form.lower(), start, end))
-		return variants
+				self._evaluate_candidate(candidate, start, end)
 
 	def _extract_variant_forms_text(self, section):
 		'''
@@ -156,7 +183,6 @@ class OEDLemmaParser:
 		just assume that each variant covers the entire 800-2000 period
 		and rely on the quotations to date things.
 		'''
-		variants = []
 		start, end = 800, 2000
 		if candidate_variants := section.find_all('span', class_='variant-form'):
 			for variant in candidate_variants:
@@ -164,32 +190,7 @@ class OEDLemmaParser:
 					variant.string.replace_with(f'=[{variant.text}]=')
 			section_text = section.text.replace('=[=[', '=[').replace(']=]=', ']=') # handle SIR_N
 			for candidate in VARIANT_FORM_PARSER.finditer(section_text):
-				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
-					continue
-				if OPTIONAL_FINAL_LETTER.search(candidate['form']):
-					optional_letter = candidate['form'][-1]
-					form_without_optional_letter = candidate['form'][:-2]
-					form_with_optional_letter = form_without_optional_letter + optional_letter
-					candidate_forms = [form_without_optional_letter, form_with_optional_letter]
-				else:
-					candidate_forms = [candidate['form']]
-				additional_candidates = []
-				for candidate_form in candidate_forms:
-					if optional_match := OPTIONAL_LETTERS.fullmatch(candidate_form):
-						letter = optional_match['letter']
-						additional_candidates.append(
-							candidate_form.replace(f'({letter})', letter)
-						)
-						additional_candidates.append(
-							candidate_form.replace(f'({letter})', '')
-						)
-				candidate_forms.extend(additional_candidates)
-				for candidate_form in candidate_forms:
-					if candidate_form.startswith('-') or candidate_form.endswith('-'):
-						candidate_form = self._expand_alternate_suffix(candidate_form)
-					if WORD_REGEX.fullmatch(candidate_form):
-						variants.append((candidate_form.lower(), start, end))
-		return variants
+				self._evaluate_candidate(candidate, start, end)
 
 	def _extract_variant_forms(self, section):
 		'''
@@ -217,13 +218,11 @@ class OEDLemmaParser:
 		if not subsections:
 			subsections = section.find_all('div', class_='variant-forms-subsection-v3')
 		if not subsections:
-			return self._temp_variants.extend(self._extract_variant_forms(section))
+			return self._extract_variant_forms(section)
 		for subsection in subsections:
 			header = subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
 			if header and HEADER_EXCLUSIONS.search(header.text):
 				continue
-			# if header:
-			# 	self._log(f'headernote > {header.text}')
 			self._extract_variants_recursive(subsection)
 
 	def _include_headword_form_if_not_listed_as_variant(self):
