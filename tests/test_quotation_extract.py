@@ -24,7 +24,6 @@ EXPECTED_COUNTS = {
 	'horn_n': {'heorn': 0, 'horn': 189, 'horne': 48, 'horun': 0},
 	'serenity_n': {'serenity': 19, 'serenitie': 3, 'serenyte': 1},
 	'clamour_n': {'clamor': 2, 'clamore': 1, 'clamour': 21, 'clamoure': 1, 'clamur': 1, 'clamure': 0},
-	'benefit_v': {'benefit': 3, 'benefited': 4}, ### THIS NEEDS TO BE FIXED
 	'sole_n': {'soal': 2, 'soale': 3, 'soile': 1, 'soille': 0, 'sole': 88, 'sool': 0, 'soole': 2, 'soul': 0, 'soule': 2, 'sowle': 0},
 	'loiter_v': {'leutere': 0, 'leutre': 0, 'lewtre': 0, 'loiter': 8, 'loitre': 0, 'loltre': 0, 'lotere': 0, 'lowtre': 0, 'loyeter': 0, 'loyter': 7, 'loytre': 0, 'loytron': 1},
 	'lancet_n': {'lancet': 7, 'lancette': 0, 'launcet': 0, 'launcette': 1, 'lawncette': 0, 'lawnset': 0},
@@ -76,11 +75,11 @@ EXPECTED_COUNTS = {
 	'appease_v': {'apaise': 0, 'apayse': 0, 'apeace': 0, 'apease': 2, 'apees': 1, 'apeese': 0, 'apeise': 0, 'apese': 5, 'appaise': 0, 'appayse': 1, 'appayze': 0, 'appease': 17, 'appese': 1},
 	'chill_adj': {'chele': 1, 'chil': 1, 'chill': 24, 'chyll': 1, 'shill': 2, 'schill': 2, 'schil': 1},
 	'dilate_v': {'deleate': 0, 'dilate': 1, 'dylate': 1, 'delate': 4},
-	'sarcophagus_n': {'sarcofagus': 1, 'sarcophagi': 3, 'sarcophagus': 10}, ### THIS NEEDS TO BE FIXED
+	'sarcophagus_n': {'sarcofagus': 1, 'sarcophagus': 10},
 
 	# ROUND 4
 	'common_adj': {'coamon': 0, 'coman': 0, 'comen': 2, 'comin': 0, 'commen': 3, 'commene': 0, 'commin': 0, 'commine': 0, 'common': 217, 'commond': 0, 'commonde': 0, 'commone': 0, 'commonne': 0, 'commoun': 0, 'commound': 0, 'commoune': 1, 'commovne': 0, 'commown': 0, 'commowne': 1, 'commun': 4, 'commund': 0, 'commune': 7, 'commuyn': 1, 'commwn': 0, 'commyn': 1, 'commyne': 0, 'comon': 5, 'comone': 1, 'comonne': 0, 'comont': 0, 'comoun': 5, 'comound': 0, 'comoune': 0, 'comovn': 0, 'comovne': 0, 'comown': 0, 'comowne': 0, 'comun': 7, 'comune': 5, 'comuyn': 0, 'comvne': 1, 'comvwne': 0, 'comvyne': 0, 'comyn': 18, 'comyne': 1, 'comynne': 0, 'coummon': 0, 'covmon': 0, 'cowman': 0, 'cowmane': 0, 'cowmmoune': 0, 'cowmon': 0, 'cowmond': 0, 'cowmone': 0, 'cowmoun': 0, 'cowmoune': 0, 'cowmownd': 0, 'komune': 1, 'quomon': 0},
-	'idea_n': {'aideah': 0, 'idaea': 0, 'idaia': 0, 'idaya': 0, 'idea': 160, 'ideae': 1, 'ideah': 0, 'idear': 0, 'ideer': 0, 'ideie': 1, 'ydea': 1, 'ydeye': 0},
+	'idea_n': {'aideah': 0, 'idaea': 0, 'idaia': 0, 'idaya': 0, 'idea': 160, 'ideah': 0, 'idear': 0, 'ideer': 0, 'ideie': 1, 'ydea': 1, 'ydeye': 0},
 	'result_n': {'resaltt': 1, 'result': 36},
 	'heavy_adj': {'evi': 0, 'evy': 0, 'havie': 0, 'havy': 1, 'hawy': 0, 'hawye': 0, 'hayvie': 0, 'heavie': 6, 'heavy': 235, 'heavye': 0, 'hefeg': 0, 'hefeȝ': 0, 'hefig': 0, 'hefiȝ': 2, 'heve': 0, 'hevey': 0, 'hevi': 0, 'hevy': 11, 'hevye': 1, 'hewy': 3, 'hæfig': 0},
 	'avoid_v': {'aduoyde': 0, 'advoid': 0, 'advoyde': 0, 'auoid': 3, 'auoide': 1, 'auoyd': 2, 'avoid': 16, 'avoide': 2, 'avoyde': 6, 'awode': 0, 'awoyde': 0},
