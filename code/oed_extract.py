@@ -19,6 +19,8 @@ OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
 
 ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
+MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
+MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
 
 HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
@@ -44,6 +46,8 @@ class OEDLemmaParser:
 		self.lemma_html_path = OED_CACHE_DIR / f'{self.lemma_id}.html'
 		self.variants_to_quotations = {}
 		self.headword_form, self.pos = self.lemma_id.split('_')
+		self.manual_inclusions = MANUAL_INCLUSIONS.get(lemma_id, [])
+		self.manual_exclusions = MANUAL_EXCLUSIONS.get(lemma_id, [])
 
 	def access(self):
 		'''
@@ -105,14 +109,21 @@ class OEDLemmaParser:
 		return BeautifulSoup(text, 'lxml')
 
 	def _create_variant_rejector(self):
+		'''
+		Depending on the part of speech and characteristics of the headword
+		form, create a regular expression to catch modern inflected forms
+		that should be rejected.
+		'''
 		if self.pos == 'n':
-			if self.headword_form.endswith('us'):
+			if self.headword_form.endswith('us'): # Latin masculine
 				return re.compile(r'\b(' + self.headword_form[:-2] + r'i|' + self.headword_form + r'es)\b')
-			elif self.headword_form.endswith('on'):
-				return re.compile(r'\b(' + self.headword_form[:-2] + r'a|' + self.headword_form + r's)\b')
-			elif self.headword_form.endswith('a'):
+			elif self.headword_form.endswith('a'): # Latin feminine
 				return re.compile(r'\b(' + self.headword_form + r'e|' + self.headword_form + r's)\b')
-			elif self.headword_form.endswith(('ch', 'sh', 's', 'x', 'z')):
+			elif self.headword_form.endswith('um'): # Latin neuter
+				return re.compile(r'\b(' + self.headword_form[:-2] + r'a|' + self.headword_form + r's)\b')
+			elif self.headword_form.endswith('on'): # Greek neuter
+				return re.compile(r'\b(' + self.headword_form[:-2] + r'a|' + self.headword_form + r's)\b')
+			elif self.headword_form.endswith(('ch', 'sh', 's', 'x', 'z')): # English -es after sibilant
 				return re.compile(r'\b' + self.headword_form + r'(es)\b')
 		elif self.pos == 'v':
 			if self.headword_form.endswith('y'):
@@ -127,6 +138,11 @@ class OEDLemmaParser:
 		return None
 
 	def _evaluate_candidate(self, candidate, start, end):
+		'''
+		Given a candidate variant form, expand any optional letters to prodice
+		a set of cadidates, and decide whether or not each candidate
+		should be accepted.
+		'''
 		if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 			return
 		if OPTIONAL_FINAL_LETTER.search(candidate['form']):
@@ -150,8 +166,9 @@ class OEDLemmaParser:
 		for candidate_form in candidate_forms:
 			if candidate_form.startswith('-') or candidate_form.endswith('-'):
 				candidate_form = self._expand_alternate_suffix(candidate_form)
+			if candidate_form in self.manual_exclusions:
+				return
 			if self.variant_rejector and self.variant_rejector.fullmatch(candidate_form):
-				print('REJECTED VARIANT', self.headword_form, candidate_form)
 				return
 			if WORD_REGEX.fullmatch(candidate_form):
 				self._temp_variants.append((candidate_form.lower(), start, end))
@@ -161,8 +178,7 @@ class OEDLemmaParser:
 		Given an OED table of variants, iterate over each row and extract the
 		variants and time period during which those variants are attested.
 		Any notes provided alongide a variant (i.e. in parentheses) are
-		also extracted; if the notes contain banned terms (e.g. "genitive"),
-		the variant is ignored.
+		also extracted.
 		'''
 		table = section.find('ol')
 		for table_row in table.find_all('li'):
@@ -183,6 +199,8 @@ class OEDLemmaParser:
 		just assume that each variant covers the entire 800-2000 period
 		and rely on the quotations to date things.
 		'''
+		for x in section.text.split('.'):
+			print(x.strip())
 		start, end = 800, 2000
 		if candidate_variants := section.find_all('span', class_='variant-form'):
 			for variant in candidate_variants:
@@ -235,6 +253,13 @@ class OEDLemmaParser:
 				return
 		self._temp_variants.append((self.headword_form, 800, 2000))
 
+	def _include_manual_inclusions(self):
+		'''
+		Include any manual inclusions.
+		'''
+		for manual_inclusion_form in self.manual_inclusions:
+			self._temp_variants.append((manual_inclusion_form, 800, 2000))
+
 	def _expand_alternate_suffix(self, candidate_form):
 		'''
 		If the OED lists a variant spelling like "-acoun" for a word
@@ -262,9 +287,10 @@ class OEDLemmaParser:
 		if variant_section is None:
 			raise NoVariantForms('No variant forms section')
 		self._extract_variants_recursive(variant_section)
-		if len(self._temp_variants) == 0:
-			raise NoVariantForms('No variant forms found')
 		self._include_headword_form_if_not_listed_as_variant()
+		self._include_manual_inclusions()
+		if len(self._temp_variants) <= 1:
+			raise NoVariantForms('No variant forms found')
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
 			for variant, start, end in sorted(list(set(self._temp_variants)))
@@ -385,6 +411,7 @@ def main(lemmata_file, output_dir, parse_only=False, show_warnings=False, start_
 		print(lemma_i, lemma)
 		
 		oed_lemma_parser = OEDLemmaParser(lemma, show_warnings=show_warnings)
+
 		try:
 			oed_lemma_parser.access()
 		except UnauthorizedAccess:
@@ -392,11 +419,15 @@ def main(lemmata_file, output_dir, parse_only=False, show_warnings=False, start_
 			break
 		except Exception as e:
 			print(f'- Failed to access {lemma}; continuing...')
+
 		try:
 			oed_lemma_parser.parse()
-		except Exception as e:
+		except NoVariantForms:
+			continue
+		except Exception:
 			print(f'- Failed to parse {lemma}; continuing...')
 			continue
+
 		oed_lemma_parser.save(output_dir)
 
 
