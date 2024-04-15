@@ -14,9 +14,10 @@ DATE_REGEX = re.compile(r'^\[?(?P<period>(e|l)?OE)|^\[?(?P<year_with_approximato
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
 HEADER_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|abbreviation|2nd|3rd|participle|past|comparative|superlative|infinitive|subjunctive|imperative)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|sic|plural|accusative|genitive|dative|inflected|participle|comparative|superlative|past|infinitive|subjunctive|imperative|2nd|3rd|adverb)', re.IGNORECASE)
-VARIANT_FORM_PARSER = re.compile(r'=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
+VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
+PARENTHETICAL_CLEANER = re.compile(r'(Shetland)|(Orkney)|Orm\.', re.IGNORECASE)
 
 ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
 MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
@@ -145,6 +146,8 @@ class OEDLemmaParser:
 		'''
 		if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
 			return
+		if candidate['gnote'] and NOTE_EXCLUSIONS.search(candidate['gnote']):
+			return
 		if OPTIONAL_FINAL_LETTER.search(candidate['form']):
 			optional_letter = candidate['form'][-1]
 			form_without_optional_letter = candidate['form'][:-2]
@@ -199,16 +202,46 @@ class OEDLemmaParser:
 		just assume that each variant covers the entire 800-2000 period
 		and rely on the quotations to date things.
 		'''
-		for x in section.text.split('.'):
-			print(x.strip())
+		if header := section.find('h3'):
+			header.extract() # remove "Variant Forms" header
+		for cross_ref in section.find_all(class_='cross-reference'):
+			cross_ref.extract()
 		start, end = 800, 2000
 		if candidate_variants := section.find_all('span', class_='variant-form'):
 			for variant in candidate_variants:
 				if variant.string is not None:
 					variant.string.replace_with(f'=[{variant.text}]=')
-			section_text = section.text.replace('=[=[', '=[').replace(']=]=', ']=') # handle SIR_N
-			for candidate in VARIANT_FORM_PARSER.finditer(section_text):
-				self._evaluate_candidate(candidate, start, end)
+
+			section_text = section.text.lower()
+			section_text = section_text.replace('=[=[', '=[').replace(']=]=', ']=') # remove possible duplicate bracketing
+			section_text = re.sub(PARENTHETICAL_CLEANER, '', section_text)
+			section_text = section_text.replace('=[', ' =[').replace(']=', ']= ')
+			section_text = re.sub(r'\/.+?\/', '', section_text) # remove IPA transcriptions
+			section_text = re.sub(r'\s+', ' ', section_text) # remove multiple consecutive spaces
+			section_text = re.sub(r'\s([.,;])', r'\1', section_text) # remove space before . , ;
+			section_text = section_text.replace('( ', '(') # remove space after (
+			section_text = section_text.replace('(=[', '=[').replace(']=)', ']=') # remove possible duplicate bracketing
+
+			for sentence in re.split(r'\.|\(also', section_text):
+				sentence = sentence.strip()
+
+				global_note = ''
+				if '=' in sentence:
+					global_note = sentence.split('=')[0]
+				if NOTE_EXCLUSIONS.search(global_note):
+					continue
+				
+				for subsentence in sentence.split('; '):
+
+					global_note = ''
+					if '=' in subsentence:
+						global_note = subsentence.split('=')[0]
+					if NOTE_EXCLUSIONS.search(global_note):
+						continue
+
+					for part in subsentence.split(', '):
+						for candidate in VARIANT_FORM_PARSER.finditer(part):
+							self._evaluate_candidate(candidate, start, end)
 
 	def _extract_variant_forms(self, section):
 		'''

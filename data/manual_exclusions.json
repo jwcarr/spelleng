@@ -1,3 +1,11 @@
 {
 	"deer_n": ["deore", "deoran", "deoren", "deores", "dueres", "deers"],
+	"confess_v": ["confest"],
+	"soft_adj": ["softher"],
+	"iron_n": ["irnens"],
+	"bank_n": ["banghs", "bangse"],
+	"shoulder_n": ["chuldris", "schildres", "schildris", "scholdres", "schouldiris", "schulderes", "schulderis", "schulders", "schuldiris", "schuldris", "schuldrys", "schylderez", "sculdres", "shildres", "sholdres", "shulderis", "shuldres", "shuldris", "soldrys"],
+	"wing_n": ["wenge", "wengen", "winguene", "wynguene", "whingen", "hwingen", "wingen", "wyngen", "wingyn", "wingon", "wenges", "weengus", "wengis", "weyngis", "wengys", "wengez", "weingis", "wengges", "wyenges", "wingges", "whinges", "wyngis", "wynges", "whyngis", "wingys", "whynges", "wingis", "winges", "wings"],
+	"tie_n": ["tighes"],
+	"wolf_n": ["wolfes", "wolfys", "wolues", "woluis", "woolfes", "woolfues", "woulfes", "wulfes", "wulues"]
 }
