@@ -12,7 +12,7 @@ OED_CACHE_DIR = DATA / 'oed_cache'
 
 DATE_REGEX = re.compile(r'^\[?(?P<period>(e|l)?OE)|^\[?(?P<year_with_approximator>(c|a|\?c|\?a)?\??(?P<year>\d{4}))')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+', re.IGNORECASE)
-HEADER_EXCLUSIONS = re.compile(r'(error|plural|genitive|dative|abbreviation|2nd|3rd|participle|past|comparative|superlative|infinitive|subjunctive|imperative)', re.IGNORECASE)
+HEADER_EXCLUSIONS = re.compile(r'(chiefly in sense|error|plural|genitive|dative|abbreviation|2nd|3rd|participle|past|comparative|superlative|infinitive|subjunctive|imperative)', re.IGNORECASE)
 NOTE_EXCLUSIONS = re.compile(r'(error|sic|plural|accusative|genitive|dative|inflected|participle|comparative|superlative|past|infinitive|subjunctive|imperative|2nd|3rd|adverb)', re.IGNORECASE)
 VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
