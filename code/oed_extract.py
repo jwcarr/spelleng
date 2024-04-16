@@ -18,7 +18,10 @@ VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<not
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
 PARENTHETICAL_CLEANER = re.compile(r'(Shetland)|(Orkney)|Orm\.', re.IGNORECASE)
+OED_URL_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_\w+)')
+OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(adj|n|v))1?')
 
+OED_AFFIXES = utils.json_read(DATA / 'oed_affixes.json')
 ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
 MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
 MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
@@ -36,14 +39,12 @@ class UnauthorizedAccess(Exception):
 class NoEntry(Exception):
 	pass
 
-class NoVariantForms(Exception):
-	pass
-
 class OEDLemmaParser:
 
-	def __init__(self, lemma_id, show_warnings=False):
+	def __init__(self, lemma_id, show_warnings=False, do_not_resolve_cross_references=False):
 		self.lemma_id = lemma_id
 		self.show_warnings = show_warnings
+		self.do_not_resolve_cross_references = do_not_resolve_cross_references
 		self.lemma_html_path = OED_CACHE_DIR / f'{self.lemma_id}.html'
 		self.variants_to_quotations = {}
 		self.headword_form, self.pos = self.lemma_id.split('_')
@@ -204,14 +205,16 @@ class OEDLemmaParser:
 		'''
 		if header := section.find('h3'):
 			header.extract() # remove "Variant Forms" header
-		for cross_ref in section.find_all(class_='cross-reference'):
-			cross_ref.extract()
+		cross_refs = []
+		for cross_ref in section.find_all('a', class_='cross-reference'):
+			cross_refs.append(cross_ref.extract())
+		if cross_refs and self.do_not_resolve_cross_references == False:
+			self._resolve_cross_references(cross_refs)
 		start, end = 800, 2000
 		if candidate_variants := section.find_all('span', class_='variant-form'):
 			for variant in candidate_variants:
 				if variant.string is not None:
 					variant.string.replace_with(f'=[{variant.text}]=')
-
 			section_text = section.text.lower()
 			section_text = section_text.replace('=[=[', '=[').replace(']=]=', ']=') # remove possible duplicate bracketing
 			section_text = re.sub(PARENTHETICAL_CLEANER, '', section_text)
@@ -221,24 +224,19 @@ class OEDLemmaParser:
 			section_text = re.sub(r'\s([.,;])', r'\1', section_text) # remove space before . , ;
 			section_text = section_text.replace('( ', '(') # remove space after (
 			section_text = section_text.replace('(=[', '=[').replace(']=)', ']=') # remove possible duplicate bracketing
-
 			for sentence in re.split(r'\.|\(also', section_text):
 				sentence = sentence.strip()
-
 				global_note = ''
 				if '=' in sentence:
 					global_note = sentence.split('=')[0]
 				if NOTE_EXCLUSIONS.search(global_note):
 					continue
-				
 				for subsentence in sentence.split('; '):
-
 					global_note = ''
 					if '=' in subsentence:
 						global_note = subsentence.split('=')[0]
 					if NOTE_EXCLUSIONS.search(global_note):
 						continue
-
 					for part in subsentence.split(', '):
 						for candidate in VARIANT_FORM_PARSER.finditer(part):
 							self._evaluate_candidate(candidate, start, end)
@@ -275,6 +273,67 @@ class OEDLemmaParser:
 			if header and HEADER_EXCLUSIONS.search(header.text):
 				continue
 			self._extract_variants_recursive(subsection)
+
+	def _resolve_cross_references(self, cross_refs):
+		'''
+		If an entry makes reference to a common affix (e.g. -ness, -ity), we
+		add in the possible spellings of those affixes.
+		'''
+		cross_ref_ids = []
+		for cross_ref in cross_refs:
+			try:
+				cross_ref_id = OED_URL_PARSER.search(cross_ref['href'])['lemma_id']
+			except:
+				continue
+			if cross_ref_id != self.lemma_id:
+				cross_ref_ids.append(cross_ref_id)
+		lemma_refs = [cross_ref for cross_ref in cross_ref_ids if cross_ref.endswith(('_n', '_v', '_adj', '_n1', '_v1', '_adj1'))]
+		affix_refs = [cross_ref for cross_ref in cross_ref_ids if cross_ref.endswith(('_suffix', '_suffix1', '_prefix', '_prefix1'))]
+		
+		if len(lemma_refs) == 1 and len(affix_refs) == 1:
+			lemma_ref = lemma_refs[0]
+			affix_ref = affix_refs[0]
+			if affix_ref not in OED_AFFIXES:
+				return
+			if lemma_match := OED_LEMMA_MAPPER.search(lemma_ref):
+				sub_lemma_id = lemma_match["id"]
+				if (OED_CACHE_DIR / f'{sub_lemma_id}.html').exists():
+					subparser = OEDLemmaParser(sub_lemma_id, do_not_resolve_cross_references=True)
+					subparser.access()
+					subparser.parse()
+					head_variants = subparser._temp_variants
+			
+					affix, affix_type = affix_ref.split('_')
+					if affix_type.endswith('1'):
+						affix_type = affix_type[:-1]
+					if affix_type == 'prefix':
+						search_string = f'^{affix}'
+					else:
+						search_string = f'{affix}$'
+					for head_variant, h_start, h_end in head_variants:
+						for alternate_affix, a_start, a_end in OED_AFFIXES[affix_ref]:
+							if h_start < a_start or h_end > a_end:
+								continue
+							if affix_type == 'prefix':
+								variant = alternate_affix + head_variant
+							else:
+								variant = head_variant + alternate_affix
+							self._temp_variants.append((variant, h_start, h_end))
+		
+		elif len(lemma_refs) == 0 and len(affix_refs) == 1:
+			affix_ref = affix_refs[0]
+			if affix_ref not in OED_AFFIXES:
+				return
+			affix, affix_type = affix_ref.split('_')
+			if affix_type.endswith('1'):
+				affix_type = affix_type[:-1]
+			if affix_type == 'prefix':
+				search_string = f'^{affix}'
+			else:
+				search_string = f'{affix}$'
+			for alternate_affix, start, end in OED_AFFIXES[affix_ref]:
+				variant = re.sub(search_string, alternate_affix, self.headword_form)
+				self._temp_variants.append((variant, start, end))
 
 	def _include_headword_form_if_not_listed_as_variant(self):
 		'''
@@ -317,13 +376,10 @@ class OEDLemmaParser:
 		'''
 		self._temp_variants = []
 		variant_section = self.lemma_page.find('section', id='variant-forms')
-		if variant_section is None:
-			raise NoVariantForms('No variant forms section')
-		self._extract_variants_recursive(variant_section)
+		if variant_section is not None:
+			self._extract_variants_recursive(variant_section)
 		self._include_headword_form_if_not_listed_as_variant()
 		self._include_manual_inclusions()
-		if len(self._temp_variants) <= 1:
-			raise NoVariantForms('No variant forms found')
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
 			for variant, start, end in sorted(list(set(self._temp_variants)))
@@ -380,17 +436,9 @@ class OEDLemmaParser:
 		quotation_bodies = self.lemma_page.find_all('div', class_='quotation-body')
 		assert len(quotation_dates) == len(quotation_bodies)
 		for date, body in zip(quotation_dates, quotation_bodies):
-			# if 'Corinthe' in body.text:
-			# 	print(1, body.text)
 			if year := self._normalize_date_to_year(date.text):
-				# if 'Corinthe' in body.text:
-				# 	print(2, year)
 				if quote := self._extract_quotation(body):
-					# if 'Corinthe' in body.text:
-					# 	print(3, quote)
 					if keyword := self._extract_keyword(body):
-						# if 'Corinthe' in body.text:
-						# 	print(4, year, keyword, quote)
 						quotes.add((year, keyword, quote))
 		return list(quotes)
 
@@ -412,12 +460,9 @@ class OEDLemmaParser:
 		'''
 		variant_quote_map = {variant: [] for variant, s, e, v in self.variants}
 		for year, keyword, quote in self.quotations:
-			# if 'Corinthe' in quote:
-			# 	print(5, year, keyword, quote)
 			if variant := self._map_quote_to_variant(year, keyword, quote):
-				# if 'Corinthe' in quote:
-				# 	print(6, variant, quote)
 				variant_quote_map[variant].append((year, quote))
+		variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
 		for quotes in variant_quote_map.values():
 			quotes.sort()
 		return variant_quote_map
@@ -450,18 +495,17 @@ def main(lemmata_file, output_dir, parse_only=False, show_warnings=False, start_
 		except UnauthorizedAccess:
 			print('Access to OED not authorized; stopping.')
 			break
-		except Exception as e:
+		except Exception:
 			print(f'- Failed to access {lemma}; continuing...')
 
 		try:
 			oed_lemma_parser.parse()
-		except NoVariantForms:
-			continue
 		except Exception:
 			print(f'- Failed to parse {lemma}; continuing...')
 			continue
 
-		oed_lemma_parser.save(output_dir)
+		if len(oed_lemma_parser.variants_to_quotations) > 0:
+			oed_lemma_parser.save(output_dir)
 
 
 if __name__ == '__main__':
