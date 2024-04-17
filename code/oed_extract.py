@@ -291,10 +291,13 @@ class OEDLemmaParser:
 				self._temp_variants.append((variant.lower(), start, end))
 
 	def tokenize_description(self, description):
+		print(description)
 		description = description.replace(',', ' , ')
 		description = description.replace('.', ' . ')
 		description = description.replace(' (', ' , ')
-		description = description.replace(' )', ' , ')
+		description = description.replace(')', ' , ')
+		description = description.replace(');', ' ; ')
+		description = description.replace('),', ' , ')
 		description = description.replace('=[', ' =[')
 		description = description.replace(']=', ']= ')
 		description = description.replace('–', ' –')
@@ -303,6 +306,7 @@ class OEDLemmaParser:
 		description = description.replace('Middle English', ' MiddleEnglish ' )
 		description = description.replace('Early Modern English', ' EarlyModernEnglish ' )
 		description = re.sub(r'\s+', ' ', description) # remove multiple consecutive spaces
+		print(description)
 		return description.split(' ')
 
 	def _drop_note_exclusions(self, variants):
