@@ -46,14 +46,14 @@ def create_dataframe(lemma, variants, counts):
 def count_quotations(lemma, variants, quotation_data):
 	counts = np.zeros((len(variants), len(BANDS)), dtype=int)
 	for variant_i, variant in enumerate(variants):
-		for year, quote in quotation_data[variant]:
+		for year, quote in quotation_data[variant]['quotations']:
 			band_i = determine_band(year)
 			if band_i is None:
 				continue
 			counts[variant_i, band_i] += 1
 	return counts
 
-def count_corpus(lemma, variants, word_freqs):
+def count_corpus(lemma, variants, quotation_data, word_freqs):
 	pos = CLMET_POS_MAP[ lemma.split('_')[1] ]
 	variants_untagged = [f'{v}_' for v in variants]
 	variants_tagged = [f'{v}_{pos}' for v in variants]
@@ -61,6 +61,10 @@ def count_corpus(lemma, variants, word_freqs):
 	for band_i, (s, e, band) in enumerate(BANDS):
 		search_variants = variants_tagged if band.startswith('Late Modern English') else variants_untagged
 		for variant_i, (variant, search_variant) in enumerate(zip(variants, search_variants)):
+			start = quotation_data[variant]['start']
+			end = quotation_data[variant]['end']
+			if s < start or e > end:
+				continue
 			counts[variant_i, band_i] = word_freqs[band].get(search_variant, 0)
 	return counts
 
@@ -86,7 +90,7 @@ if __name__ == '__main__':
 		variants = sorted(list(quotation_data.keys()))
 		
 		quote_count = count_quotations(lemma, variants, quotation_data)
-		corpus_count = count_corpus(lemma, variants, word_freqs)
+		corpus_count = count_corpus(lemma, variants, quotation_data, word_freqs)
 		combined_count = quote_count + corpus_count
 
 		variants_to_keep = np.where(combined_count.sum(axis=1) > 0)[0]

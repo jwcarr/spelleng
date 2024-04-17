@@ -179,6 +179,7 @@ class OEDLemmaParser:
 			self._extract_variants_recursive(variant_section)
 		self._include_headword_form_if_not_listed_as_variant()
 		self._include_manual_inclusions()
+		self._resolve_duplicates()
 		return [
 			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
 			for variant, start, end in sorted(list(set(self._temp_variants)))
@@ -291,11 +292,10 @@ class OEDLemmaParser:
 				self._temp_variants.append((variant.lower(), start, end))
 
 	def tokenize_description(self, description):
-		print(description)
 		description = description.replace(',', ' , ')
 		description = description.replace('.', ' . ')
 		description = description.replace(' (', ' , ')
-		description = description.replace(')', ' , ')
+		description = description.replace(') ', ' , ')
 		description = description.replace(');', ' ; ')
 		description = description.replace('),', ' , ')
 		description = description.replace('=[', ' =[')
@@ -306,7 +306,6 @@ class OEDLemmaParser:
 		description = description.replace('Middle English', ' MiddleEnglish ' )
 		description = description.replace('Early Modern English', ' EarlyModernEnglish ' )
 		description = re.sub(r'\s+', ' ', description) # remove multiple consecutive spaces
-		print(description)
 		return description.split(' ')
 
 	def _drop_note_exclusions(self, variants):
@@ -439,14 +438,24 @@ class OEDLemmaParser:
 		for variant, start, end in self._temp_variants:
 			if variant == self.headword_form:
 				return
-		self._temp_variants.append((self.headword_form, 800, 2000))
+		self._temp_variants.append((self.headword_form, 800, 2100))
 
 	def _include_manual_inclusions(self):
 		'''
 		Include any manual inclusions.
 		'''
 		for manual_inclusion_form in self.manual_inclusions:
-			self._temp_variants.append((manual_inclusion_form, 800, 2000))
+			self._temp_variants.append((manual_inclusion_form, 800, 2100))
+
+	def _resolve_duplicates(self):
+		variants = {}
+		for variant, start, end in self._temp_variants:
+			if variant in variants:
+				variants[variant][0].append(start)
+				variants[variant][1].append(end)
+			else:
+				variants[variant] = [[start], [end]]
+		self._temp_variants = [(variant, min(starts), max(ends)) for variant, (starts, ends) in variants.items()]
 
 	####################
 	# EXTRACT QUOTATIONS
@@ -529,14 +538,14 @@ class OEDLemmaParser:
 		'''
 		Map each extracted quote onto an extracted variant.
 		'''
-		variant_quote_map = {variant: [] for variant, s, e, v in self.variants}
+		variant_quote_map = {variant: {'start': s, 'end': e, 'quotations': []} for variant, s, e, v in self.variants}
 		for year, keyword, quote in self.quotations:
 			if variant := self._map_quote_to_variant(year, keyword, quote):
-				variant_quote_map[variant].append((year, quote))
-		if drop_unattested_variants:
-			variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
-		for quotes in variant_quote_map.values():
-			quotes.sort()
+				variant_quote_map[variant]['quotations'].append((year, quote))
+		# if drop_unattested_variants:
+		# 	variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
+		for variant, data in variant_quote_map.items():
+			data['quotations'].sort()
 		return variant_quote_map
 
 

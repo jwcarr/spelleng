@@ -83,7 +83,7 @@ EXPECTED_COUNTS = {
 	'heavy_adj': {'evi': 0, 'evy': 0, 'havie': 0, 'havy': 1, 'hawy': 0, 'hawye': 0, 'hayvie': 0, 'heavie': 6, 'heavy': 235, 'heavye': 0, 'hefeg': 0, 'hefeȝ': 0, 'hefig': 0, 'hefiȝ': 2, 'heve': 0, 'hevey': 0, 'hevi': 0, 'hevy': 11, 'hevye': 1, 'hewy': 3, 'hæfig': 0},
 	'avoid_v': {'aduoyde': 0, 'advoid': 0, 'advoyde': 0, 'auoid': 3, 'auoide': 1, 'auoyd': 2, 'avoid': 16, 'avoide': 2, 'avoyde': 6, 'awode': 0, 'awoyde': 0},
 	'castle_n': {'caastel': 0, 'castel': 14, 'castele': 0, 'castell': 11, 'castelle': 0, 'castill': 0, 'castille': 0, 'castle': 41, 'castylle': 0, 'caystelle': 0, 'kastell': 0},
-	'sick_adj': {'cec': 0, 'cek': 0, 'ceke': 0, 'seac': 0, 'seak': 0, 'seake': 1, 'sec': 1, 'seek': 1, 'seeke': 1, 'seik': 4, 'sek': 3, 'seke': 20, 'seoc': 1, 'seoch': 0, 'seyk': 1, 'sic': 1, 'sick': 180, 'sicke': 23, 'sickk': 0, 'siec': 0, 'siek': 1, 'sieke': 0, 'siik': 0, 'siike': 1, 'sijk': 4, 'sijke': 0, 'sik': 3, 'sike': 1, 'sioc': 0, 'siyk': 0, 'suc': 0, 'sycke': 2, 'syike': 0, 'syk': 1, 'syke': 6, 'syyk': 0, 'sæc': 0, 'zick': 0, 'zik': 1, 'zyke': 1},
+	'sick_adj': {'seok': 0, 'seock': 0, 'cec': 0, 'cek': 0, 'ceke': 0, 'seac': 0, 'seak': 0, 'seake': 1, 'sec': 1, 'seek': 1, 'seeke': 1, 'seik': 4, 'sek': 3, 'seke': 20, 'seoc': 1, 'seoch': 0, 'seyk': 1, 'sic': 1, 'sick': 180, 'sicke': 23, 'sickk': 0, 'siec': 0, 'siek': 1, 'sieke': 0, 'siik': 0, 'siike': 1, 'sijk': 4, 'sijke': 0, 'sik': 3, 'sike': 1, 'sioc': 0, 'siyk': 0, 'suc': 0, 'sycke': 2, 'syike': 0, 'syk': 1, 'syke': 6, 'syyk': 0, 'sæc': 0, 'zick': 0, 'zik': 1, 'zyke': 1},
 	'literary_adj': {'letterary': 0, 'literare': 1, 'literarie': 0, 'literary': 66, 'litterarie': 0, 'litterary': 1},
 	'liberal_adj': {'leberale': 0, 'leberall': 0, 'leberalle': 0, 'libberall': 0, 'liberaill': 0, 'liberal': 122, 'liberale': 0, 'liberall': 20, 'liberalle': 0, 'libral': 0, 'lyberal': 2, 'lyberall': 3, 'lyberalle': 0},
 	'absent_adj': {'absent': 78, 'absente': 2, 'apsent': 0, 'apseunt': 0},
@@ -118,7 +118,7 @@ EXPECTED_COUNTS = {
 	'wave_n': {'wave': 124, 'weave': 1, 'whave': 0},
 	'loyalty_n': {'loialtie': 1, 'loialty': 0, 'loyaltee': 1, 'loyaltie': 4, 'loyalty': 15, 'loyaltye': 0, 'loyaulte': 1},
 	'interpretation_n': {'enterpretacioun': 0, 'enterpreteysoun': 1, 'interpretacione': 0, 'interpretacionne': 1, 'interpretacioun': 3, 'interpretacyon': 1, 'interpretation': 16},
-	'wax_n': {'vexe': 0, 'valx': 0, 'vax': 1, 'waks': 1, 'walx': 6, 'waux': 0, 'wax': 124, 'waxche': 0, 'waxe': 17, 'weax': 0, 'wex': 2, 'wexe': 4, 'whax': 0, 'wæx': 1},
+	'wax_n': {'vexe': 0, 'valx': 0, 'vax': 1, 'waks': 1, 'walx': 6, 'waux': 0, 'wax': 124, 'waxche': 0, 'waxe': 17, 'weax': 0, 'wex': 9, 'wexe': 4, 'whax': 0, 'wæx': 1},
 	'accommodate_v': {'accomidate': 1, 'accommadate': 0, 'accommodat': 0, 'accommodate': 88, 'accomodat': 0, 'accomodate': 4, 'acomodate': 0},
 	'colleague_n': {'colege': 0, 'coliegue': 0, 'colleague': 3, 'college': 1, 'collegue': 2, 'collig': 0, 'collige': 1},
 	'anatomy_n': {'anathomy': 1, 'anathomye': 1, 'anatomie': 11, 'anatomy': 32, 'anothamie': 1, 'anothomia': 0, 'anothomy': 1, 'anotomie': 0, 'anotomy': 3, 'atomy': 0},
@@ -135,11 +135,11 @@ EXPECTED_COUNTS = {
 	'short_adj': {'chort': 0, 'sceort': 1, 'scheort': 0, 'schert': 1, 'schort': 25, 'schorte': 6, 'schorth': 1, 'schorthe': 1, 'schortt': 0, 'scort': 3, 'shert': 0, 'shorrt': 0, 'short': 610, 'shorte': 30, 'shortt': 0, 'sort': 0, 'sorte': 0, 'ssort': 2},
 	'soft_adj': {'saaft': 0, 'saft': 5, 'safte': 1, 'sauft': 0, 'saufte': 0, 'sofft': 1, 'soffte': 7, 'soft': 654, 'softe': 100, 'sohte': 0, 'souffte': 0, 'soufte': 1, 'soyft': 0, 'soyfte': 0, 'zaft': 0, 'zofte': 2},
 	'sweet_adj': {'squete': 0, 'sqwete': 0, 'sueit': 0, 'suet': 4, 'suete': 7, 'suette': 0, 'suiet': 0, 'suit': 0, 'suoet': 0, 'sweet': 167, 'sweete': 26, 'sweit': 4, 'sweitt': 0, 'sweote': 1, 'swet': 6, 'swete': 39, 'swett': 0, 'swette': 1, 'sweyt': 1, 'sweyte': 1, 'swiete': 0, 'swoete': 1, 'swyte': 1, 'zuete': 0},
-	'sore_adj': {'saire': 0, 'sair': 17, 'sar': 4, 'sare': 1, 'sayr': 1, 'sayre': 1, 'sear': 0, 'soir': 2, 'sooar': 0, 'soor': 1, 'soore': 2, 'sor': 2, 'sore': 132, 'sær': 1, 'zore': 1},
+	'sore_adj': {'ser': 0, 'saire': 0, 'sair': 17, 'sar': 4, 'sare': 1, 'sayr': 1, 'sayre': 1, 'sear': 0, 'soir': 2, 'sooar': 0, 'soor': 1, 'soore': 2, 'sor': 2, 'sore': 132, 'sær': 1, 'zore': 1},
 	'degree_n': {'decre': 0, 'degre': 16, 'degree': 66, 'degrie': 0, 'dygre': 1, 'þegre': 0},
 	'step_n': {'stap': 0, 'stape': 4, 'stapp': 0, 'steape': 0, 'step': 184, 'stepe': 1, 'stepp': 4, 'steppe': 13, 'stiape': 1, 'stæpe': 4, 'stępe': 0},
 	'village_n': {'vilage': 0, 'villach': 0, 'village': 133, 'vylage': 0, 'vyllage': 2, 'welage': 0, 'willage': 0, 'willaige': 0, 'wylage': 1},
-	'weight_n': {'gewiht': 0, 'gewyht': 0, 'iwicht': 0, 'vecht': 1, 'veicht': 0, 'veycht': 0, 'veyght': 0, 'vycht': 1, 'waicht': 0, 'waight': 19, 'waighte': 0, 'wait': 1, 'waite': 2, 'waithe': 1, 'waycht': 0, 'wayght': 2, 'wayghte': 0, 'wayht': 1, 'wayte': 0, 'wecht': 5, 'weght': 6, 'weghte': 0, 'wehht': 0, 'weicht': 0, 'weight': 204, 'weighte': 5, 'weiht': 1, 'weit': 0, 'weite': 0, 'weiȝt': 1, 'weiȝte': 3, 'weycht': 0, 'weyght': 14, 'weyghte': 1, 'weyht': 1, 'weyhte': 4, 'weyte': 1, 'weyth': 1, 'weythe': 1, 'weyȝt': 0, 'weyȝte': 1, 'weȝt': 1, 'weȝte': 0, 'wheith': 0, 'wheyt': 0, 'wheyte': 0, 'whyght': 0, 'whyghte': 0, 'whyt': 0, 'whyte': 0, 'wight': 5, 'wighte': 1, 'wiht': 1, 'witte': 0, 'wiȝt': 2, 'wiȝte': 2, 'wyght': 3, 'wyghte': 1, 'wygthe': 1, 'wyht': 1, 'wyt': 1, 'wyte': 2, 'wythe': 0, 'wytte': 0, 'wyȝt': 1, 'wyȝte': 4},
+	'weight_n': {'whete': 0, 'whette': 0, 'gewiht': 0, 'gewyht': 0, 'iwicht': 0, 'vecht': 1, 'veicht': 0, 'veycht': 0, 'veyght': 0, 'vycht': 1, 'waicht': 0, 'waight': 19, 'waighte': 0, 'wait': 1, 'waite': 2, 'waithe': 1, 'waycht': 0, 'wayght': 2, 'wayghte': 0, 'wayht': 1, 'wayte': 0, 'wecht': 5, 'weght': 6, 'weghte': 0, 'wehht': 0, 'weicht': 0, 'weight': 204, 'weighte': 5, 'weiht': 1, 'weit': 0, 'weite': 0, 'weiȝt': 1, 'weiȝte': 3, 'weycht': 0, 'weyght': 14, 'weyghte': 1, 'weyht': 1, 'weyhte': 4, 'weyte': 1, 'weyth': 1, 'weythe': 1, 'weyȝt': 0, 'weyȝte': 1, 'weȝt': 1, 'weȝte': 0, 'wheith': 0, 'wheyt': 0, 'wheyte': 0, 'whyght': 0, 'whyghte': 0, 'whyt': 0, 'whyte': 0, 'wight': 5, 'wighte': 1, 'wiht': 1, 'witte': 0, 'wiȝt': 2, 'wiȝte': 2, 'wyght': 3, 'wyghte': 1, 'wygthe': 1, 'wyht': 1, 'wyt': 1, 'wyte': 2, 'wythe': 0, 'wytte': 0, 'wyȝt': 1, 'wyȝte': 4},
 	'iron_n': {'ahn': 0, 'ahrn': 1, 'ahun': 0, 'airan': 0, 'airn': 3, 'airne': 0, 'airone': 0, 'arn': 0, 'arne': 0, 'ayron': 0, 'ayrun': 0, 'ayser': 1, 'earin': 0, 'earing': 0, 'earn': 0, 'eeren': 0, 'eire': 0, 'eiren': 0, 'eren': 0, 'erene': 0, 'ern': 1, 'erne': 0, 'eryn': 0, 'eyren': 0, 'eyrn': 0, 'eyron': 0, 'heren': 0, 'herne': 0, 'heyron': 1, 'hierne': 0, 'hire': 0, 'hirne': 0, 'hiron': 0, 'hisen': 0, 'hyeren': 0, 'hyren': 0, 'hyrene': 0, 'hyrn': 0, 'hyrne': 0, 'hyrone': 0, 'hyryn': 0, 'iearne': 0, 'ierell': 0, 'ieren': 0, 'ierne': 0, 'ieron': 0, 'ire': 6, 'iren': 13, 'irene': 1, 'irenn': 2, 'ireron': 0, 'ireyn': 0, 'irin': 1, 'irine': 0, 'irinn': 0, 'irn': 3, 'irne': 4, 'irnne': 1, 'iron': 207, 'irone': 0, 'ironne': 0, 'iroun': 0, 'irren': 0, 'irrne': 0, 'irron': 0, 'irun': 0, 'iryn': 1, 'iryne': 0, 'isaern': 0, 'isen': 5, 'iseren': 0, 'isern': 3, 'iserne': 0, 'isrn': 0, 'issen': 0, 'issern': 0, 'isyn': 0, 'isærn': 1, 'iun': 0, 'iurn': 0, 'iyren': 0, 'iyrne': 0, 'iyron': 0, 'iyrone': 0, 'iyryn': 0, 'jerne': 0, 'jre': 0, 'jren': 0, 'jrenne': 0, 'jrne': 0, 'jron': 0, 'orn': 0, 'yeirne': 0, 'yeren': 0, 'yerin': 1, 'yern': 1, 'yerne': 2, 'yeron': 1, 'yerryn': 0, 'yeryn': 0, 'yeryne': 0, 'yirn': 1, 'yoiran': 0, 'yoren': 0, 'yorin': 0, 'yorne': 0, 'yoron': 0, 'yr': 1, 'yre': 6, 'yren': 5, 'yrene': 0, 'yrin': 0, 'yrine': 0, 'yrn': 3, 'yrne': 1, 'yron': 12, 'yrone': 0, 'yronn': 0, 'yroun': 0, 'yrovn': 0, 'yrun': 0, 'yryn': 1, 'yryne': 0, 'yse': 1, 'ysen': 1, 'ysern': 0, 'yzen': 1, 'ȝirne': 0},
 	'bank_n': {'banc': 1, 'banck': 1, 'bancke': 1, 'bank': 70, 'banke': 21, 'bannke': 0, 'bonc': 1, 'bonk': 1, 'bonke': 0, 'bunk': 0},
 	'shoulder_n': {'schildur': 0, 'schodyr': 0, 'scholder': 0, 'scholdere': 0, 'scholdren': 0, 'scholdur': 1, 'schowder': 0, 'schulder': 1, 'schuldere': 0, 'schuldir': 0, 'schuldire': 0, 'schuldre': 0, 'schuldren': 0, 'schuldur': 0, 'schuldyr': 0, 'schuldyre': 0, 'sculder': 0, 'sculderen': 0, 'sculdor': 1, 'sculdur': 1, 'scyldur': 0, 'shildur': 0, 'shoder': 0, 'sholder': 2, 'sholdere': 1, 'sholdre': 0, 'shoulder': 86, 'shouldren': 0, 'shouther': 0, 'showlder': 0, 'shuder': 0, 'shuldeir': 0, 'shulder': 1, 'shuldre': 1, 'shuldren': 1, 'shuldur': 0, 'solder': 0, 'soldre': 0, 'souldiour': 0, 'ssoldren': 1, 'sulder': 0},
@@ -147,7 +147,7 @@ EXPECTED_COUNTS = {
 	'trick_n': {'trick': 96, 'tricke': 19, 'trik': 1, 'trike': 1},
 	'wing_n': {'weng': 0, 'weyng': 1, 'weynge': 3, 'whenge': 0, 'whing': 1, 'whyng': 0, 'whynge': 0, 'wing': 190, 'winge': 3, 'wyng': 7, 'wynge': 12, 'wynke': 0},
 	'deer_n': {'deare': 0, 'deer': 4, 'deere': 4, 'deir': 1, 'deor': 3, 'der': 5, 'dere': 3, 'deure': 0, 'dier': 0, 'diere': 0, 'dor': 1, 'duer': 0, 'dur': 1, 'dure': 1, 'dær': 1, 'theer': 0},
-	'vow_n': {'uuou': 0, 'voo': 0, 'vou': 2, 'voue': 0, 'vow': 38, 'vowe': 11, 'woue': 1, 'voye': 1, 'woe': 0, 'wou': 0, 'wov': 0, 'wow': 1, 'wowe': 0},
+	'vow_n': {'vowhe': 0, 'uuou': 0, 'voo': 0, 'vou': 2, 'voue': 0, 'vow': 38, 'vowe': 11, 'woue': 1, 'voye': 1, 'woe': 0, 'wou': 0, 'wov': 0, 'wow': 1, 'wowe': 0},
 	'tie_n': {'tee': 1, 'teiȝ': 1, 'tey': 0, 'teȝ': 0, 'tie': 40, 'ty': 1, 'tye': 18},
 	'lamb_n': {'lam': 2, 'lamb': 31, 'lambe': 10, 'lame': 0, 'lamm': 1, 'lamme': 0, 'lamp': 1, 'lom': 1, 'lomb': 4, 'lombbe': 0, 'lombe': 3, 'lombor': 0, 'lome': 0, 'loom': 0, 'loomb': 1, 'loombe': 0, 'lowmpe': 0, 'lęmb': 0},
 	'strife_n': {'strief': 0, 'strif': 13, 'strife': 42, 'striff': 1, 'striffe': 1, 'striif': 1, 'strijf': 1, 'strijfe': 0, 'strive': 0, 'stryf': 7, 'stryfe': 7, 'stryff': 2, 'stryffe': 1, 'stryif': 0, 'stryiff': 0, 'stryve': 1, 'strywe': 0},
@@ -183,20 +183,6 @@ def test_man_n():
 		# variant_counts = {v: c for v, c in variant_counts.items() if c > 0}
 		lemma_data = json_read(OED / f'{lemma}.json')
 		assert set(lemma_data.keys()) == set(variant_counts.keys())
-		for variant, quotations in lemma_data.items():
-			assert len(quotations) == variant_counts[variant]
+		for variant, data in lemma_data.items():
+			assert len(data['quotations']) == variant_counts[variant]
 
-
-if __name__ == '__main__':
-
-	import argparse
-
-	parser = argparse.ArgumentParser()
-	parser.add_argument('lemma', action='store', type=str, help='lemma to count')
-	args = parser.parse_args()
-
-	expected_counts = {}
-	lemma_data = json_read(OED / f'{args.lemma}.json')
-	for variant, quotations in lemma_data.items():
-		expected_counts[variant] = len(quotations)
-	print(expected_counts)
