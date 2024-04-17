@@ -199,15 +199,18 @@ class OEDLemmaParser:
 		if not subsections:
 			subsections = section.find_all('div', class_='variant-forms-subsection-v3')
 		if not subsections:
-			try:
-				return self._extract_variant_forms_table(section)
-			except:
-				return self._extract_variant_forms_text(section)
+			return self._extract_variant_forms(section)
 		for subsection in subsections:
 			header = subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
 			if header and HEADER_EXCLUSIONS.search(header.text):
 				continue
 			self._extract_variants_recursive(subsection)
+
+	def _extract_variant_forms(self, section):
+		try:
+			return self._extract_variant_forms_table(section)
+		except:
+			return self._extract_variant_forms_text(section)
 
 	def _extract_variant_forms_table(self, section):
 		'''
@@ -230,8 +233,7 @@ class OEDLemmaParser:
 					continue
 				if candidate['gnote'] and NOTE_EXCLUSIONS.search(candidate['gnote']):
 					continue
-				variants.apppend((candidate['form'].lower(), start, end))
-		
+				variants.append((candidate['form'].lower(), start, end))
 		variants = self._expand_abbreviations(variants)
 		variants = self._drop_invalid_forms(variants)
 		for variant, start, end in variants:
