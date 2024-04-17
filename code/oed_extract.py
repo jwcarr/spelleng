@@ -254,12 +254,10 @@ class OEDLemmaParser:
 			cross_refs.append(cross_ref.extract())
 		if cross_refs and self.do_not_resolve_cross_references == False:
 			self._resolve_cross_references(cross_refs)
-
 		if candidate_variants := section.find_all('span', class_='variant-form'):
 			for variant in candidate_variants:
 				if variant.string is not None:
 					variant.string.replace_with(f'=[{variant.text}]=')
-
 			description_tokens = self.tokenize_description(section.text)
 			variants = []
 			item = deepcopy(DEFAULT_ITEM)
@@ -286,7 +284,6 @@ class OEDLemmaParser:
 					item['notes'] += token + ' '
 					if first_label_set is None:
 						first_label_set = 'note'
-			
 			variants = self._drop_note_exclusions(variants)
 			variants = self._expand_abbreviations(variants)
 			variants = self._drop_invalid_forms(variants)
@@ -296,6 +293,8 @@ class OEDLemmaParser:
 	def tokenize_description(self, description):
 		description = description.replace(',', ' , ')
 		description = description.replace('.', ' . ')
+		description = description.replace(' (', ' , ')
+		description = description.replace(' )', ' , ')
 		description = description.replace('=[', ' =[')
 		description = description.replace(']=', ']= ')
 		description = description.replace('–', ' –')
