@@ -1,4 +1,5 @@
 from pathlib import Path
+from copy import deepcopy
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -26,6 +27,26 @@ ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
 MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
 MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
 
+DEFAULT_ITEM = {'variant': None, 'start': 800, 'end': 2100, 'notes': ''}
+PERIOD_MAP = {
+	'OldEnglish': {'start': 800, 'end': 1150},
+	'MiddleEnglish': {'start': 1150, 'end': 1500},
+	'EarlyModernEnglish': {'start': 1500, 'end': 1710},
+	'1400s': {'start': 1400, 'end': 1500},
+	'1500s': {'start': 1500, 'end': 1600},
+	'1600s': {'start': 1600, 'end': 1700},
+	'1700s': {'start': 1700, 'end': 1800},
+	'1800s': {'start': 1800, 'end': 1900},
+	'1900s': {'start': 1900, 'end': 2000},
+	'–1400s': {'end': 1500},
+	'–1500s': {'end': 1600},
+	'–1600s': {'end': 1700},
+	'–1700s': {'end': 1800},
+	'–1800s': {'end': 1900},
+	'–1900s': {'end': 2000},
+	'–': {'end': 2100}
+}
+
 HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
@@ -51,6 +72,10 @@ class OEDLemmaParser:
 		self.manual_inclusions = MANUAL_INCLUSIONS.get(lemma_id, [])
 		self.manual_exclusions = MANUAL_EXCLUSIONS.get(lemma_id, [])
 
+	################
+	# PUBLIC METHODS
+	################
+
 	def access(self):
 		'''
 		If the HTML path exists, we already have the page downloaded, so open
@@ -61,7 +86,7 @@ class OEDLemmaParser:
 		else:
 			self.lemma_page = self._download_lemma_page()
 
-	def parse(self):
+	def parse(self, drop_unattested_variants=False):
 		'''
 		Parse the OED page.
 		'''
@@ -71,15 +96,15 @@ class OEDLemmaParser:
 		variant_forms.sort(key=lambda v: len(v), reverse=True)
 		self.any_variant_re = re.compile(r'\b(' + '|'.join(variant_forms) + r')\b', re.IGNORECASE)
 		self.quotations = self._extract_quotations()
-		self.variants_to_quotations = self._create_mapping()
+		self.variants_to_quotations = self._create_mapping(drop_unattested_variants)
 
 	def save(self, output_dir):
 		output_file = output_dir / f'{self.lemma_id}.json'
 		utils.json_write(self.variants_to_quotations, output_file)
 
-	def _log(self, log_string):
-		with open(DATA / 'oed_extract_log.txt', 'a') as file:
-			file.write(log_string + '\n')
+	#################
+	# ACCESS OED DATA
+	#################
 
 	def _download_lemma_page(self):
 		'''
@@ -110,6 +135,10 @@ class OEDLemmaParser:
 			text = file.read()
 		return BeautifulSoup(text, 'lxml')
 
+	#######################
+	# VARIANT FORMS PARSING
+	#######################
+
 	def _create_variant_rejector(self):
 		'''
 		Depending on the part of speech and characteristics of the headword
@@ -139,118 +168,21 @@ class OEDLemmaParser:
 				return re.compile(r'\b' + self.headword_form + r'(est|er)\b')
 		return None
 
-	def _evaluate_candidate(self, candidate, start, end):
+	def _extract_variants(self):
 		'''
-		Given a candidate variant form, expand any optional letters to prodice
-		a set of cadidates, and decide whether or not each candidate
-		should be accepted.
+		Extract variant forms from the variant-forms part of the OED page.
+		Then take the unique set and compile a regex for each one.
 		'''
-		if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
-			return
-		if candidate['gnote'] and NOTE_EXCLUSIONS.search(candidate['gnote']):
-			return
-		if OPTIONAL_FINAL_LETTER.search(candidate['form']):
-			optional_letter = candidate['form'][-1]
-			form_without_optional_letter = candidate['form'][:-2]
-			form_with_optional_letter = form_without_optional_letter + optional_letter
-			candidate_forms = [form_without_optional_letter, form_with_optional_letter]
-		else:
-			candidate_forms = [candidate['form']]
-		additional_candidates = []
-		for candidate_form in candidate_forms:
-			if optional_match := OPTIONAL_LETTERS.fullmatch(candidate_form):
-				letter = optional_match['letter']
-				additional_candidates.append(
-					candidate_form.replace(f'({letter})', letter)
-				)
-				additional_candidates.append(
-					candidate_form.replace(f'({letter})', '')
-				)
-		candidate_forms.extend(additional_candidates)
-		for candidate_form in candidate_forms:
-			if candidate_form.startswith('-') or candidate_form.endswith('-'):
-				candidate_form = self._expand_alternate_suffix(candidate_form)
-			if candidate_form in self.manual_exclusions:
-				return
-			if self.variant_rejector and self.variant_rejector.fullmatch(candidate_form):
-				return
-			if WORD_REGEX.fullmatch(candidate_form):
-				self._temp_variants.append((candidate_form.lower(), start, end))
-
-	def _extract_variant_forms_table(self, section):
-		'''
-		Given an OED table of variants, iterate over each row and extract the
-		variants and time period during which those variants are attested.
-		Any notes provided alongide a variant (i.e. in parentheses) are
-		also extracted.
-		'''
-		table = section.find('ol')
-		for table_row in table.find_all('li'):
-			start = int(table_row['data-start-date'])
-			if start == 950:
-				start = 800 # OED variants from "Old English" have a start of 950, but early dates should also be Old English
-			end = int(table_row['data-end-date'])
-			for variant in table_row.find_all('span', class_='variant-form'):
-				variant.string.replace_with(f'=[{variant.text}]=')
-			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
-				self._evaluate_candidate(candidate, start, end)
-
-	def _extract_variant_forms_text(self, section):
-		'''
-		Given an OED sentence style description of variants, extract the
-		variants and any associated notes. In these cases, it is difficult
-		to parse the time period that applies to a given variant, so we
-		just assume that each variant covers the entire 800-2000 period
-		and rely on the quotations to date things.
-		'''
-		if header := section.find('h3'):
-			header.extract() # remove "Variant Forms" header
-		cross_refs = []
-		for cross_ref in section.find_all('a', class_='cross-reference'):
-			cross_refs.append(cross_ref.extract())
-		if cross_refs and self.do_not_resolve_cross_references == False:
-			self._resolve_cross_references(cross_refs)
-		start, end = 800, 2000
-		if candidate_variants := section.find_all('span', class_='variant-form'):
-			for variant in candidate_variants:
-				if variant.string is not None:
-					variant.string.replace_with(f'=[{variant.text}]=')
-			section_text = section.text.lower()
-			section_text = section_text.replace('=[=[', '=[').replace(']=]=', ']=') # remove possible duplicate bracketing
-			section_text = re.sub(PARENTHETICAL_CLEANER, '', section_text)
-			section_text = section_text.replace('=[', ' =[').replace(']=', ']= ')
-			section_text = re.sub(r'\/.+?\/', '', section_text) # remove IPA transcriptions
-			section_text = re.sub(r'\s+', ' ', section_text) # remove multiple consecutive spaces
-			section_text = re.sub(r'\s([.,;])', r'\1', section_text) # remove space before . , ;
-			section_text = section_text.replace('( ', '(') # remove space after (
-			section_text = section_text.replace('(=[', '=[').replace(']=)', ']=') # remove possible duplicate bracketing
-			for sentence in re.split(r'\.|\(also', section_text):
-				sentence = sentence.strip()
-				global_note = ''
-				if '=' in sentence:
-					global_note = sentence.split('=')[0]
-				if NOTE_EXCLUSIONS.search(global_note):
-					continue
-				for subsentence in sentence.split('; '):
-					global_note = ''
-					if '=' in subsentence:
-						global_note = subsentence.split('=')[0]
-					if NOTE_EXCLUSIONS.search(global_note):
-						continue
-					for part in subsentence.split(', '):
-						for candidate in VARIANT_FORM_PARSER.finditer(part):
-							self._evaluate_candidate(candidate, start, end)
-
-	def _extract_variant_forms(self, section):
-		'''
-		Each OED variant form section comes in one of two formats: a tabular
-		format or a flat text format. First we try to parse the section as
-		a table, but if this fails, we fall back on parsing it as text.
-		'''
-		try:
-			return self._extract_variant_forms_table(section)
-		except:
-			return self._extract_variant_forms_text(section)
+		self._temp_variants = []
+		variant_section = self.lemma_page.find('section', id='variant-forms')
+		if variant_section is not None:
+			self._extract_variants_recursive(variant_section)
+		self._include_headword_form_if_not_listed_as_variant()
+		self._include_manual_inclusions()
+		return [
+			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
+			for variant, start, end in sorted(list(set(self._temp_variants)))
+		]
 
 	def _extract_variants_recursive(self, section):
 		'''
@@ -267,12 +199,171 @@ class OEDLemmaParser:
 		if not subsections:
 			subsections = section.find_all('div', class_='variant-forms-subsection-v3')
 		if not subsections:
-			return self._extract_variant_forms(section)
+			try:
+				return self._extract_variant_forms_table(section)
+			except:
+				return self._extract_variant_forms_text(section)
 		for subsection in subsections:
 			header = subsection.find(('h4', 'h5', 'h6'), class_='variant-forms-subsection-header')
 			if header and HEADER_EXCLUSIONS.search(header.text):
 				continue
 			self._extract_variants_recursive(subsection)
+
+	def _extract_variant_forms_table(self, section):
+		'''
+		Given an OED table of variants, iterate over each row and extract the
+		variants and time period during which those variants are attested.
+		Any notes provided alongide a variant (i.e. in parentheses) are
+		also extracted.
+		'''
+		variants = []
+		table = section.find('ol')
+		for table_row in table.find_all('li'):
+			start = int(table_row['data-start-date'])
+			if start == 950:
+				start = 800 # OED variants from "Old English" have a start of 950, but early dates should also be Old English
+			end = int(table_row['data-end-date'])
+			for variant in table_row.find_all('span', class_='variant-form'):
+				variant.string.replace_with(f'=[{variant.text}]=')
+			for candidate in VARIANT_FORM_PARSER.finditer(table_row.text):
+				if candidate['note'] and NOTE_EXCLUSIONS.search(candidate['note']):
+					continue
+				if candidate['gnote'] and NOTE_EXCLUSIONS.search(candidate['gnote']):
+					continue
+				variants.apppend((candidate['form'].lower(), start, end))
+		
+		variants = self._expand_abbreviations(variants)
+		variants = self._drop_invalid_forms(variants)
+		for variant, start, end in variants:
+			self._temp_variants.append((variant.lower(), start, end))
+
+	def _extract_variant_forms_text(self, section):
+		'''
+		Given an OED sentence style description of variants, extract the
+		variants and any associated notes. In these cases, it is difficult
+		to parse the time period that applies to a given variant, so we
+		just assume that each variant covers the entire 800-2000 period
+		and rely on the quotations to date things.
+		'''
+		if header := section.find('h3'):
+			header.extract() # remove "Variant Forms" header
+		cross_refs = []
+		for cross_ref in section.find_all('a', class_='cross-reference'):
+			cross_refs.append(cross_ref.extract())
+		if cross_refs and self.do_not_resolve_cross_references == False:
+			self._resolve_cross_references(cross_refs)
+
+		if candidate_variants := section.find_all('span', class_='variant-form'):
+			for variant in candidate_variants:
+				if variant.string is not None:
+					variant.string.replace_with(f'=[{variant.text}]=')
+
+			description_tokens = self.tokenize_description(section.text)
+			variants = []
+			item = deepcopy(DEFAULT_ITEM)
+			first_label_set = None
+			for token in description_tokens:
+				if token == ',' or (token == ';' and first_label_set is None):
+					if item['variant']:
+						variants.append(deepcopy(item))
+						item['variant'] = None
+				elif token == '.' or (token == ';' and first_label_set == 'period'):
+					if item['variant']:
+						variants.append(deepcopy(item))
+						item = deepcopy(DEFAULT_ITEM)
+						first_label_set = None
+				elif match := VARIANT_FORM_PARSER.match(token):
+					item['variant'] = match['form']
+				elif update := PERIOD_MAP.get(token, None):
+					item |= update
+					if first_label_set is None:
+						first_label_set = 'period'
+					elif first_label_set == 'period':
+						item['notes'] = ''
+				elif len(token) > 1:
+					item['notes'] += token + ' '
+					if first_label_set is None:
+						first_label_set = 'note'
+			
+			variants = self._drop_note_exclusions(variants)
+			variants = self._expand_abbreviations(variants)
+			variants = self._drop_invalid_forms(variants)
+			for variant, start, end in variants:
+				self._temp_variants.append((variant.lower(), start, end))
+
+	def tokenize_description(self, description):
+		description = description.replace(',', ' , ')
+		description = description.replace('.', ' . ')
+		description = description.replace('=[', ' =[')
+		description = description.replace(']=', ']= ')
+		description = description.replace('–', ' –')
+		description = re.sub(r'\/.+?\/', '', description) # remove IPA transcriptions
+		description = description.replace('Old English', ' OldEnglish ' )
+		description = description.replace('Middle English', ' MiddleEnglish ' )
+		description = description.replace('Early Modern English', ' EarlyModernEnglish ' )
+		description = re.sub(r'\s+', ' ', description) # remove multiple consecutive spaces
+		return description.split(' ')
+
+	def _drop_note_exclusions(self, variants):
+		new_variants = []
+		for variant in variants:
+			if NOTE_EXCLUSIONS.search(variant['notes']):
+				continue
+			new_variants.append((variant['variant'], variant['start'], variant['end']))
+		return new_variants
+
+	def _expand_abbreviations(self, variants1):
+		variants2 = []
+		for variant, start, end in variants1:
+			if OPTIONAL_FINAL_LETTER.search(variant):
+				optional_letter = variant[-1]
+				form_without_optional_letter = variant[:-2]
+				form_with_optional_letter = form_without_optional_letter + optional_letter
+				variants2.append((form_without_optional_letter, start, end))
+				variants2.append((form_with_optional_letter, start, end))
+			else:
+				variants2.append((variant, start, end))
+		
+		variants3 = []
+		for variant, start, end in variants2:
+			if optional_match := OPTIONAL_LETTERS.fullmatch(variant):
+				letter = optional_match['letter']
+				variants3.append(
+					(variant.replace(f'({letter})', letter), start, end)
+				)
+				variants3.append(
+					(variant.replace(f'({letter})', ''), start, end)
+				)
+			else:
+				variants3.append((variant, start, end))
+
+		variants4 = []
+		for variant, start, end in variants3:
+			alt_affix = None
+			if variant.startswith('-'):
+				alt_affix = variant[1:]
+			elif variant.endswith('-'):
+				alt_affix = variant[:-1]
+			if alt_affix:
+				try:
+					variant = re.sub(ALT_SUFFIX_FORMS[variant], alt_affix, self.headword_form)
+				except Exception:
+					pass
+			variants4.append((variant, start, end))
+
+		return variants4
+
+	def _drop_invalid_forms(self, variants):
+		new_variants = []
+		for variant, start, end in variants:
+			if variant in self.manual_exclusions:
+				continue
+			if not WORD_REGEX.fullmatch(variant):
+				continue
+			if self.variant_rejector and self.variant_rejector.fullmatch(variant):
+				continue
+			new_variants.append((variant, start, end))
+		return new_variants
 
 	def _resolve_cross_references(self, cross_refs):
 		'''
@@ -352,38 +443,9 @@ class OEDLemmaParser:
 		for manual_inclusion_form in self.manual_inclusions:
 			self._temp_variants.append((manual_inclusion_form, 800, 2000))
 
-	def _expand_alternate_suffix(self, candidate_form):
-		'''
-		If the OED lists a variant spelling like "-acoun" for a word
-		like "consideration", expand the variant to its full form
-		(i.e., "consideracion"). To do this, we take the first letter of
-		the variant suffix (e.g. "a") and find the last occurance on
-		an "a" in the headword form and make the replacement.
-		'''
-		if candidate_form.startswith('-'):
-			alt_suffix = candidate_form[1:]
-		else:
-			alt_suffix = candidate_form[:-1]
-		try:
-			return re.sub(ALT_SUFFIX_FORMS[candidate_form], alt_suffix, self.headword_form)
-		except Exception:
-			return candidate_form
-
-	def _extract_variants(self):
-		'''
-		Extract variant forms from the variant-forms part of the OED page.
-		Then take the unique set and compile a regex for each one.
-		'''
-		self._temp_variants = []
-		variant_section = self.lemma_page.find('section', id='variant-forms')
-		if variant_section is not None:
-			self._extract_variants_recursive(variant_section)
-		self._include_headword_form_if_not_listed_as_variant()
-		self._include_manual_inclusions()
-		return [
-			(variant, start, end, re.compile(r'\b' + variant + r'\b', re.IGNORECASE))
-			for variant, start, end in sorted(list(set(self._temp_variants)))
-		]
+	####################
+	# EXTRACT QUOTATIONS
+	####################
 
 	def _normalize_date_to_year(self, text_date):
 		'''
@@ -442,6 +504,10 @@ class OEDLemmaParser:
 						quotes.add((year, keyword, quote))
 		return list(quotes)
 
+	#############################
+	# MAP VARIANTS AND QUOTATIONS
+	#############################
+
 	def _map_quote_to_variant(self, year, keyword, quote):
 		'''
 		For a given quote attested in a given year, check it against all
@@ -454,7 +520,7 @@ class OEDLemmaParser:
 				return variant
 		return None
 
-	def _create_mapping(self):
+	def _create_mapping(self, drop_unattested_variants):
 		'''
 		Map each extracted quote onto an extracted variant.
 		'''
@@ -462,7 +528,8 @@ class OEDLemmaParser:
 		for year, keyword, quote in self.quotations:
 			if variant := self._map_quote_to_variant(year, keyword, quote):
 				variant_quote_map[variant].append((year, quote))
-		variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
+		if drop_unattested_variants:
+			variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
 		for quotes in variant_quote_map.values():
 			quotes.sort()
 		return variant_quote_map
