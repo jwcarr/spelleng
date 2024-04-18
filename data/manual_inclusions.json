@@ -1,6 +1,49 @@
 {
-	"tranquillity_n": ["tranquilite", "tranquilitee", "tranquilitye", "tranquilitie", "tranquillite", "tranquillitee", "tranquillitye", "tranquillitie"],
-	"sympathy_n": ["simpathie"],
-	"keep_v": ["kep", "kepe", "keepe", "keype", "keipe", "keip", "keep"],
-	"wolf_n": ["uulf", "volf", "volue", "vuolfe", "wlfe", "wolf", "wolfe", "wolff", "wolffe", "wolph", "wolphe", "wolve", "woof", "woolf", "woolfe", "wouf", "wouff", "woulf", "woulfe", "wowf", "wulf", "wulfe", "wulff"]
+	"keep_v": [
+		["kep", 1150, 1500],
+		["kepe", 1150, 1600],
+		["keepe", 1150, 1700],
+		["keype", 1500, 1600],
+		["keipe", 1500, 1600],
+		["keip", 1500, 1600],
+		["keep", 1500, 2100]
+	],
+	"sympathy_n": [
+		["simpathie", 1500, 1700]
+	],
+	"tranquillity_n": [
+		["tranquilite", 1150, 1700],
+		["tranquilitee", 1150, 1700],
+		["tranquilitye", 1150, 1700],
+		["tranquilitie", 1150, 1700],
+		["tranquillite", 1150, 1700],
+		["tranquillitee", 1150, 1700],
+		["tranquillitye", 1150, 1700],
+		["tranquillitie", 1150, 1700]
+	],
+	"wolf_n": [
+		["uulf", 800, 1150],
+		["volf", 1150, 1500],
+		["wlf", 1150, 1500],
+		["wlfe", 1150, 1500],
+		["wouff", 1150, 1500],
+		["wulff", 1150, 1500],
+		["wolff", 1150, 1600],
+		["wolffe", 1150, 1600],
+		["wulf", 1150, 1600],
+		["wulfe", 1150, 1600],
+		["woulf", 1150, 1700],
+		["woulfe", 1150, 1700],
+		["wolfe", 1150, 1800],
+		["woolf", 1150, 1800],
+		["woolfe", 1150, 1800],
+		["volue", 1500, 1600],
+		["vuolfe", 1500, 1600],
+		["wolphe", 1500, 1600],
+		["wowf", 1500, 1800],
+		["wolph", 1600, 1700],
+		["wouf", 1700, 1800],
+		["woof", 1800, 1900],
+		["wolf", 1150, 2100]
+	]
 }

@@ -18,12 +18,11 @@ NOTE_EXCLUSIONS = re.compile(r'(error|sic|plural|accusative|genitive|dative|infl
 VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<note>.+?)\))?', re.IGNORECASE)
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
-PARENTHETICAL_CLEANER = re.compile(r'(Shetland)|(Orkney)|Orm\.', re.IGNORECASE)
 OED_URL_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_\w+)')
 OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(adj|n|v))1?')
 
 OED_AFFIXES = utils.json_read(DATA / 'oed_affixes.json')
-ALT_SUFFIX_FORMS = utils.json_read(DATA / 'alt_suffix_forms.json')
+ALT_AFFIX_FORMS = utils.json_read(DATA / 'alt_affix_forms.json')
 MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
 MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
 
@@ -86,7 +85,7 @@ class OEDLemmaParser:
 		else:
 			self.lemma_page = self._download_lemma_page()
 
-	def parse(self, drop_unattested_variants=False):
+	def parse(self):
 		'''
 		Parse the OED page.
 		'''
@@ -96,7 +95,7 @@ class OEDLemmaParser:
 		variant_forms.sort(key=lambda v: len(v), reverse=True)
 		self.any_variant_re = re.compile(r'\b(' + '|'.join(variant_forms) + r')\b', re.IGNORECASE)
 		self.quotations = self._extract_quotations()
-		self.variants_to_quotations = self._create_mapping(drop_unattested_variants)
+		self.variants_to_quotations = self._create_mapping()
 
 	def save(self, output_dir):
 		output_file = output_dir / f'{self.lemma_id}.json'
@@ -350,7 +349,7 @@ class OEDLemmaParser:
 				alt_affix = variant[:-1]
 			if alt_affix:
 				try:
-					variant = re.sub(ALT_SUFFIX_FORMS[variant], alt_affix, self.headword_form)
+					variant = re.sub(ALT_AFFIX_FORMS[variant], alt_affix, self.headword_form)
 				except Exception:
 					pass
 			variants4.append((variant, start, end))
@@ -435,17 +434,21 @@ class OEDLemmaParser:
 		If the lemma headword form was not extracted from the variant forms
 		section, make sure it is included.
 		'''
+		earliest = 2100
 		for variant, start, end in self._temp_variants:
+			if start < earliest:
+				earliest = start
 			if variant == self.headword_form:
 				return
-		self._temp_variants.append((self.headword_form, 800, 2100))
+		if earliest == 2100:
+			earliest = 1000
+		self._temp_variants.append((self.headword_form, earliest - 200, 2100))
 
 	def _include_manual_inclusions(self):
 		'''
 		Include any manual inclusions.
 		'''
-		for manual_inclusion_form in self.manual_inclusions:
-			self._temp_variants.append((manual_inclusion_form, 800, 2100))
+		self._temp_variants.extend(self.manual_inclusions)
 
 	def _resolve_duplicates(self):
 		variants = {}
@@ -534,7 +537,7 @@ class OEDLemmaParser:
 				return variant
 		return None
 
-	def _create_mapping(self, drop_unattested_variants):
+	def _create_mapping(self):
 		'''
 		Map each extracted quote onto an extracted variant.
 		'''
@@ -542,8 +545,6 @@ class OEDLemmaParser:
 		for year, keyword, quote in self.quotations:
 			if variant := self._map_quote_to_variant(year, keyword, quote):
 				variant_quote_map[variant]['quotations'].append((year, quote))
-		# if drop_unattested_variants:
-		# 	variant_quote_map = {variant: quotes for variant, quotes in variant_quote_map.items() if len(quotes) > 0}
 		for variant, data in variant_quote_map.items():
 			data['quotations'].sort()
 		return variant_quote_map

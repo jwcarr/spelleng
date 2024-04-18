@@ -152,7 +152,7 @@ EXPECTED_COUNTS = {
 	'lamb_n': {'lam': 2, 'lamb': 31, 'lambe': 10, 'lame': 0, 'lamm': 1, 'lamme': 0, 'lamp': 1, 'lom': 1, 'lomb': 4, 'lombbe': 0, 'lombe': 3, 'lombor': 0, 'lome': 0, 'loom': 0, 'loomb': 1, 'loombe': 0, 'lowmpe': 0, 'lęmb': 0},
 	'strife_n': {'strief': 0, 'strif': 13, 'strife': 42, 'striff': 1, 'striffe': 1, 'striif': 1, 'strijf': 1, 'strijfe': 0, 'strive': 0, 'stryf': 7, 'stryfe': 7, 'stryff': 2, 'stryffe': 1, 'stryif': 0, 'stryiff': 0, 'stryve': 1, 'strywe': 0},
 	'bowl_n': {'boal': 0, 'bole': 5, 'boll': 4, 'bolla': 1, 'bolle': 9, 'boole': 1, 'boul': 1, 'boule': 2, 'bowl': 26, 'bowle': 3},
-	'wolf_n': {'wlf': 1, 'uulf': 0, 'volf': 1, 'volue': 0, 'vuolfe': 1, 'wlfe': 0, 'wolf': 63, 'wolfe': 18, 'wolff': 0, 'wolffe': 2, 'wolph': 0, 'wolphe': 0, 'wolve': 1, 'woof': 1, 'woolf': 2, 'woolfe': 6, 'wouf': 0, 'wouff': 0, 'woulf': 0, 'woulfe': 4, 'wowf': 2, 'wulf': 12, 'wulfe': 2, 'wulff': 0},
+	'wolf_n': {'wlf': 1, 'uulf': 0, 'volf': 1, 'volue': 0, 'vuolfe': 1, 'wlfe': 0, 'wolf': 63, 'wolfe': 18, 'wolff': 0, 'wolffe': 2, 'wolph': 0, 'wolphe': 0, 'woof': 1, 'woolf': 2, 'woolfe': 6, 'wouf': 0, 'wouff': 0, 'woulf': 0, 'woulfe': 4, 'wowf': 2, 'wulf': 12, 'wulfe': 2, 'wulff': 0},
 	'echo_n': {'eccho': 12, 'ecco': 2, 'echo': 36, 'ecko': 1},
 	'stockfish_n': {'stockfhis': 0, 'stockfihs': 0, 'stockfisch': 0, 'stockfische': 0, 'stockfish': 9, 'stockfys': 0, 'stockphyshe': 0},
 	'fucus_n': {'fucus': 14, 'fukes': 3},
@@ -177,12 +177,16 @@ def json_read(input_file):
 		data = json.load(file)
 	return data
 
-
-def test_man_n():
-	for lemma, variant_counts in EXPECTED_COUNTS.items():
-		# variant_counts = {v: c for v, c in variant_counts.items() if c > 0}
+def test_all():
+	for lemma, variant_counts_expected in EXPECTED_COUNTS.items():
+		variant_counts_expected = sorted([(v, c) for v, c in variant_counts_expected.items()])
 		lemma_data = json_read(OED / f'{lemma}.json')
-		assert set(lemma_data.keys()) == set(variant_counts.keys())
-		for variant, data in lemma_data.items():
-			assert len(data['quotations']) == variant_counts[variant]
+		variant_counts = sorted([(v, len(data['quotations'])) for v, data in lemma_data.items()])
+		assert variant_counts == variant_counts_expected
+
+
+
+
+
+
 
