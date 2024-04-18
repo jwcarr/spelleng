@@ -11,7 +11,7 @@ OED_QUOTATIONS = DATA / 'oed_quotations'
 CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj'}
 
 BANDS = [
-	(   0,  950, "Old English (I & II)"),
+	( 800,  950, "Old English (I & II)"),
 	( 950, 1050, "Old English (III)"),
 	(1050, 1150, "Old English (IV)"),
 	(1150, 1250, "Middle English (I)"),
@@ -41,6 +41,7 @@ def create_dataframe(lemma, variants, counts):
 	data.update(
 		{f'band_{i + 1}': counts[:, i] for i in range(len(BANDS))}
 	)
+	data['total'] = counts.sum(axis=1)
 	return pd.DataFrame(data)
 
 def count_quotations(lemma, variants, quotation_data):
@@ -61,8 +62,8 @@ def count_corpus(lemma, variants, quotation_data, word_freqs):
 	for band_i, (s, e, band) in enumerate(BANDS):
 		search_variants = variants_tagged if band.startswith('Late Modern English') else variants_untagged
 		for variant_i, (variant, search_variant) in enumerate(zip(variants, search_variants)):
-			start = quotation_data[variant]['start']
-			end = quotation_data[variant]['end']
+			start = quotation_data[variant]['start'] - 70
+			end = quotation_data[variant]['end'] + 70
 			if s < start or e > end:
 				continue
 			counts[variant_i, band_i] = word_freqs[band].get(search_variant, 0)
