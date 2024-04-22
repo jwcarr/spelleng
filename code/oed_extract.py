@@ -29,21 +29,30 @@ MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
 DEFAULT_ITEM = {'variant': None, 'start': 800, 'end': 2100, 'notes': ''}
 PERIOD_MAP = {
 	'OldEnglish': {'start': 800, 'end': 1150},
+	'OE': {'start': 800, 'end': 1150},
 	'MiddleEnglish': {'start': 1150, 'end': 1500},
-	'EarlyModernEnglish': {'start': 1500, 'end': 1710},
-	'1400s': {'start': 1400, 'end': 1500},
+	'ME': {'start': 1150, 'end': 1500},
 	'1500s': {'start': 1500, 'end': 1600},
+	'15': {'start': 1500, 'end': 1600},
 	'1600s': {'start': 1600, 'end': 1700},
+	'16': {'start': 1600, 'end': 1700},
 	'1700s': {'start': 1700, 'end': 1800},
+	'17': {'start': 1700, 'end': 1800},
 	'1800s': {'start': 1800, 'end': 1900},
+	'18': {'start': 1800, 'end': 1900},
 	'1900s': {'start': 1900, 'end': 2000},
-	'–1400s': {'end': 1500},
+	'19': {'start': 1900, 'end': 2000},
 	'–1500s': {'end': 1600},
+	'–15': {'end': 1600},
 	'–1600s': {'end': 1700},
+	'–16': {'end': 1700},
 	'–1700s': {'end': 1800},
+	'–17': {'end': 1800},
 	'–1800s': {'end': 1900},
+	'–18': {'end': 1900},
 	'–1900s': {'end': 2000},
-	'–': {'end': 2100}
+	'–19': {'end': 2000},
+	'–': {'end': 2100},
 }
 
 HTTP_REQUEST_HEADERS = {
@@ -296,10 +305,12 @@ class OEDLemmaParser:
 		description = description.replace(' (', ' , ')
 		description = description.replace(') ', ' , ')
 		description = description.replace(');', ' ; ')
+		description = description.replace('–;', '– ;')
 		description = description.replace('),', ' , ')
 		description = description.replace('=[', ' =[')
 		description = description.replace(']=', ']= ')
-		description = description.replace('–', ' –')
+		description = description.replace('—', ' –') # em dash
+		description = description.replace('–', ' –') # en dash
 		description = re.sub(r'\/.+?\/', '', description) # remove IPA transcriptions
 		description = description.replace('Old English', ' OldEnglish ' )
 		description = description.replace('Middle English', ' MiddleEnglish ' )
@@ -533,7 +544,7 @@ class OEDLemmaParser:
 		If no variant is found, return None.
 		'''
 		for variant, start, end, variant_re in self.variants:
-			if year >= (start - 70) and year <= (end + 70) and variant_re.search(keyword):
+			if year >= start and year <= end and variant_re.search(keyword):
 				return variant
 		return None
 
