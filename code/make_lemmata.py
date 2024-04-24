@@ -44,6 +44,11 @@ if __name__ == '__main__':
 		at_least_n_documents=3,
 	)
 
+	# remove modals
+	del(lemmata['have_v'])
+	del(lemmata['can_v'])
+	del(lemmata['will_v'])
+
 	json_write(lemmata, ROOT / 'data' / 'lemmata.json')
 
 	print('# lemmata:', len(lemmata))
