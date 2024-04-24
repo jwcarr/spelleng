@@ -68,7 +68,8 @@ def count_corpus(lemma, variants, quotation_data, corpus):
 			for document in corpus[band]:
 				if document['year'] >= start and document['year'] <= end:
 					if search_variant in document['freqs']:
-						counts[variant_i, band_i] += 1
+						# counts[variant_i, band_i] += 1
+						counts[variant_i, band_i] += document['freqs'][search_variant]
 	return counts
 
 def add_counts_to_corpus(corpus):
