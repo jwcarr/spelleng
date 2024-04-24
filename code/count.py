@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 import utils
 import numpy as np
@@ -54,7 +55,7 @@ def count_quotations(lemma, variants, quotation_data):
 			counts[variant_i, band_i] += 1
 	return counts
 
-def count_corpus(lemma, variants, quotation_data, word_freqs):
+def count_corpus(lemma, variants, quotation_data, corpus):
 	pos = CLMET_POS_MAP[ lemma.split('_')[1] ]
 	variants_untagged = [f'{v}_' for v in variants]
 	variants_tagged = [f'{v}_{pos}' for v in variants]
@@ -62,20 +63,29 @@ def count_corpus(lemma, variants, quotation_data, word_freqs):
 	for band_i, (s, e, band) in enumerate(BANDS):
 		search_variants = variants_tagged if band.startswith('Late Modern English') else variants_untagged
 		for variant_i, (variant, search_variant) in enumerate(zip(variants, search_variants)):
-			start = quotation_data[variant]['start'] - 70
-			end = quotation_data[variant]['end'] + 70
-			if s < start or e > end:
-				continue
-			counts[variant_i, band_i] = word_freqs[band].get(search_variant, 0)
+			start = quotation_data[variant]['start']
+			end = quotation_data[variant]['end']
+			for document in corpus[band]:
+				if document['year'] >= start and document['year'] <= end:
+					if search_variant in document['freqs']:
+						counts[variant_i, band_i] += 1
 	return counts
+
+def add_counts_to_corpus(corpus):
+	for band, documents in corpus.items():
+		for document in documents:
+			document['freqs'] = defaultdict(int)
+			for token in document['text'].split(' '):
+				document['freqs'][token] += 1
 
 
 if __name__ == '__main__':
 
-	word_freqs = utils.json_read(DATA / 'word_freqs.json')
-
 	lemmata = utils.json_read(DATA / 'lemmata.json')
 	lemmata = sorted(list(lemmata.keys()))
+
+	corpus = utils.json_read(DATA / 'corpus.json')
+	add_counts_to_corpus(corpus)
 
 	quotation_data_frames = []
 	corpus_data_frames = []
@@ -91,7 +101,7 @@ if __name__ == '__main__':
 		variants = sorted(list(quotation_data.keys()))
 		
 		quote_count = count_quotations(lemma, variants, quotation_data)
-		corpus_count = count_corpus(lemma, variants, quotation_data, word_freqs)
+		corpus_count = count_corpus(lemma, variants, quotation_data, corpus)
 		combined_count = quote_count + corpus_count
 
 		variants_to_keep = np.where(combined_count.sum(axis=1) > 0)[0]
