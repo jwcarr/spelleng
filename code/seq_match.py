@@ -1,3 +1,4 @@
+from collections import defaultdict
 from difflib import SequenceMatcher
 
 def junk(element):
@@ -55,10 +56,13 @@ def insert(insertion, prev, foll):
 		return prev, prev + insertion
 	if insertion == foll:
 		return foll, insertion + foll
-	if categories[insertion] == categories[prev]:
-		return prev, prev + insertion
-	if categories[insertion] == categories[foll]:
-		return foll, insertion + foll
+	try:
+		if categories[insertion] == categories[prev]:
+			return prev, prev + insertion
+		if categories[insertion] == categories[foll]:
+			return foll, insertion + foll
+	except KeyError:
+		pass
 	return prev, prev + insertion
 
 def delete(deletion, prev, foll):
@@ -70,11 +74,14 @@ def delete(deletion, prev, foll):
 		return prev + deletion, prev
 	if deletion == foll:
 		return deletion + foll, foll
-	if categories[deletion] == categories[prev]:
-		return prev + deletion, prev
-	if categories[deletion] == categories[foll]:
-		return deletion + foll, foll
-	return prev, prev + deletion
+	try:
+		if categories[deletion] == categories[prev]:
+			return prev + deletion, prev
+		if categories[deletion] == categories[foll]:
+			return deletion + foll, foll
+	except KeyError:
+		pass
+	return prev + deletion, prev
 
 
 	
@@ -84,7 +91,6 @@ def compare(form1, form2):
 	if form1 == form2:
 		return transformations
 	seq_matcher.set_seqs(form1, form2)
-	print(seq_matcher.get_opcodes())
 	for code, f1s, f1e, f2s, f2e in seq_matcher.get_opcodes():
 		if code == 'replace':
 			part1 = form1[f1s:f1e]
@@ -101,48 +107,72 @@ def compare(form1, form2):
 	return transformations
 
 
-
-# def compare(form1, form2):
-# 	transformations = []
-# 	if form1 == form2:
-# 		return transformations
-# 	seq_matcher.set_seqs(form1, form2)
-# 	for code, f1s, f1e, f2s, f2e in seq_matcher.get_opcodes():
-# 		if code == 'replace':
-# 			part1 = form1[f1s:f1e]
-# 			part2 = form2[f2s:f2e]
-# 			transformations.append(f'{part1}→{part2}')
-# 		elif code == 'delete':
-# 			deletion = form1[f1s:f1e]
-# 			# part1, part2 = delete(deletion, form2[f2s-1:f2s], form2[f2s:f2s+1])
-# 			transformations.append(f'-{deletion}')
-# 		elif code == 'insert':
-# 			insertion = form2[f2s:f2e]
-# 			# part1, part2 = insert(insertion, form1[f1s-1:f1s], form1[f1s:f1s+1])
-# 			transformations.append(f'+{insertion}')
-# 	return transformations
+def compare(form1, form2):
+	transformations = []
+	if form1 == form2:
+		return transformations
+	seq_matcher.set_seqs(form1, form2)
+	for code, f1s, f1e, f2s, f2e in seq_matcher.get_opcodes():
+		if code == 'replace':
+			part1 = form1[f1s:f1e]
+			part2 = form2[f2s:f2e]
+			transformations.append(f'{part1}→{part2}')
+		elif code == 'delete':
+			deletion = form1[f1s:f1e]
+			transformations.append(f'-{deletion}')
+		elif code == 'insert':
+			insertion = form2[f2s:f2e]
+			transformations.append(f'+{insertion}')
+	return transformations
 
 
 
-def shortest_replacement(a, b):
-	# Pad the shorter string with placeholder characters
-	if len(a) < len(b):
-		a = a.ljust(len(b), '\0')
-	elif len(b) < len(a):
-		b = b.ljust(len(a), '\0')
-	print(a, b)
-	matcher = SequenceMatcher(None, a, b)
-	opcodes = matcher.get_opcodes()
-	print(opcodes)
-	
-	replacements = [(a[i1:i2], b[j1:j2]) for tag, i1, i2, j1, j2 in opcodes if tag == 'replace']
-	
-	shortest_replacement = min(replacements, key=lambda x: len(x[0]))
-	
-	return shortest_replacement
+def convert_to_probs(d):
+	n = sum(d.values())
+	for k in d:
+		d[k] = d[k] / n
+	return d
+
+def pairwise_weighted_compare(set1, set2):
+	set1 = convert_to_probs(set1)
+	set2 = convert_to_probs(set2)
+	transformations = defaultdict(int)
+	for form1, prob1 in set1.items():
+		for form2, prob2 in set2.items():
+			transformation = compare(form1, form2)
+			for t in transformation:
+				transformations[t] += prob1 * prob2
+	return dict(transformations)
 
 
-print(shortest_replacement('cyng', 'cyning'))
+
+
+band2 = {
+	'<cing>': 1,
+	'<cyng>': 1,
+	'<cyning>': 4,
+	'<kyning>': 1,
+}
+
+band3 = {
+	'<cyng>': 2,
+	'<cyning>': 1,
+	'<king>': 1,
+	'<kyng>': 1,
+}
+
+tr = pairwise_weighted_compare(band2, band3)
+print(tr)
+print(sum(tr.values()))
+quit()
+
+
+
+
+print(compare('cyning', 'cyng'))
+print(compare('cyng', 'king'))
+print(compare('king', 'kyng'))
+print(compare('kyng', 'king'))
 quit()
 
 

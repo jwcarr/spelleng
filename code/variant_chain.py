@@ -24,15 +24,9 @@ class SpellingTransitions:
 		self.counts = counts.groupby('lemma')
 		self.seq_matcher = SequenceMatcher()
 		self.transition_points = [f'{i}-{i+1}' for i in range(1, 13)]
-		# self.transformations_by_point = {
-		# 	f'{i}-{i+1}': defaultdict(list)
-		# 	for i in range(1, 13)
-		# }
 		self.transformations_by_point = defaultdict(lambda: defaultdict(list))
 		for lemma in self.lemmata:
 			self.compute_transformations(lemma)
-
-		
 		self.uni_transformations = sorted(list(self.transformations_by_point))
 		self.transition_matrix = np.zeros((len(self.uni_transformations), 12), dtype=int)
 		for i, trans in enumerate(self.uni_transformations):
@@ -41,14 +35,6 @@ class SpellingTransitions:
 				self.transition_matrix[i, j] = len(lemmata)
 		for trans, row in zip(self.uni_transformations, self.transition_matrix):
 			print(str(row.sum()).zfill(4), trans, row)
-
-		
-		# for transition_point, data in self.transformations_by_point.items():
-		# 	sorted_transformations = sorted(list(data.keys()), key=lambda k: len(data[k]), reverse=True)
-		# 	print(transition_point)
-		# 	for transformation in sorted_transformations:
-		# 		print(transformation, len(data[transformation]))
-		# 	print()
 
 	def make_variant_chain(self, lemma):
 		counts = self.counts.get_group(lemma)
