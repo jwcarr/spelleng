@@ -110,6 +110,17 @@ class OEDLemmaParser:
 		output_file = output_dir / f'{self.lemma_id}.json'
 		utils.json_write(self.variants_to_quotations, output_file)
 
+	def get_derivatives(self):
+		derivatives = []
+		for derivative in self.lemma_page.find_all('span', class_='compound-entry-title'):
+			if link := derivative.find('a'):
+				derivative_id = link['href'].removeprefix('/dictionary/')
+				headword, pos = derivative_id.split('_')
+				if pos.startswith(('n', 'v', 'adj')) and WORD_REGEX.fullmatch(headword):
+					derivatives.append(derivative_id)
+		return derivatives
+
+
 	#################
 	# ACCESS OED DATA
 	#################
