@@ -37,7 +37,7 @@ def calculate_agreement(counts1, counts2, variants):
 		n_bands_in_agreement += agreement_on_dominant_form(dom_forms1, dom_forms2)
 	return n_bands_in_agreement
 
-def make_agreement_figure(counts_oed, counts_cor):
+def make_agreement_figure(counts_oed, counts_cor, output_file):
 	lemmata = counts_oed['lemma'].unique()
 	counts_oed = counts_oed.groupby('lemma')
 	counts_cor = counts_cor.groupby('lemma')
@@ -59,12 +59,14 @@ def make_agreement_figure(counts_oed, counts_cor):
 	axis.set_xlabel('Agreement score')
 	axis.set_ylabel('Number of lemmata')
 	fig.tight_layout()
-	fig.savefig(ROOT / 'manuscript' / 'figs' / 'agreement.pdf')
+	fig.savefig(output_file)
 
 
 if __name__ == '__main__':
 
-	counts_oed = pd.read_csv(DATA / 'count_oed.csv')
-	counts_cor = pd.read_csv(DATA / 'count_corpus_texts.csv')
+	counts_quot = pd.read_csv(DATA / 'count_quot.csv')
+	counts_text = pd.read_csv(DATA / 'count_text.csv')
+	counts_freq = pd.read_csv(DATA / 'count_freq.csv')
 
-	make_agreement_figure(counts_oed, counts_cor)
+	make_agreement_figure(counts_quot, counts_text, ROOT / 'manuscript' / 'figs' / 'agreement.pdf')
+	# make_agreement_figure(counts_text, counts_freq, ROOT / 'manuscript' / 'figs' / 'agreement2.pdf')
