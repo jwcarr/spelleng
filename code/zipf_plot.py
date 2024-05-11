@@ -15,10 +15,9 @@ BROAD_BANDS = {'OE': 'Old English', 'ME': 'Middle English', 'eME': 'Early Modern
 def entropy(freq_dist):
 	freq_dist = np.array(freq_dist)
 	if freq_dist.sum() == 0:
-		return 0
+		return None
 	P = freq_dist / freq_dist.sum()
 	return -sum([p * np.log2(p) for p in P if p > 0])
-
 
 def freq_by_rank_plot(axis, freqs, title, color, label):
 	freqs = freqs[ np.where(freqs > 0) ]
@@ -33,17 +32,27 @@ def freq_by_rank_plot(axis, freqs, title, color, label):
 	axis.set_title(title, fontsize=7)
 	axis.set_xlabel('Lemma rank')
 
+def n_variants_plot(axis, number_of_variants, color, n, greater_than=8):
+	n_vars = [number_of_variants.count(i) / n for i in range(1, greater_than+1)]
+	n_vars = n_vars + [1 - sum(n_vars)]
+	axis.bar(np.arange(1, greater_than+2), n_vars, color=color)
+	axis.set_xlim(0, greater_than+2)
+	axis.set_ylim(0, 1)
+	axis.set_xlabel('Number of variants')
+	axis.set_xticks(list(range(1, greater_than+2)))
+	axis.set_xticklabels(list(range(1, greater_than+1)) + [f'>{greater_than}'])
 
 count_quot = pd.read_csv(DATA / 'count_quot.csv')
 count_text = pd.read_csv(DATA / 'count_text.csv')
 count_freq = pd.read_csv(DATA / 'count_freq.csv')
 
 
-fig = plt.figure(figsize=(7.48, 4))
+fig = plt.figure(figsize=(7.48, 5))
 
-grid = gridspec.GridSpec(2, 4, figure=fig)
+grid = gridspec.GridSpec(3, 4, figure=fig)
 grid_freq = gridspec.GridSpecFromSubplotSpec(1, 4, subplot_spec=grid[0, :])
-grid_entr = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=grid[1, :])
+grid_nvar = gridspec.GridSpecFromSubplotSpec(1, 4, subplot_spec=grid[1, :])
+grid_entr = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=grid[2, :])
 
 for j, band in enumerate(BROAD_BANDS):
 
@@ -53,12 +62,26 @@ for j, band in enumerate(BROAD_BANDS):
 	text_totals = count_text.groupby('lemma')[band].sum().to_numpy()
 	freq_totals = count_freq.groupby('lemma')[band].sum().to_numpy()
 
-	freq_by_rank_plot(axis, quot_totals, BROAD_BANDS[band], 'cadetblue', 'N quotes')
-	freq_by_rank_plot(axis, text_totals, BROAD_BANDS[band], 'darkorange', 'N texts')
-	freq_by_rank_plot(axis, freq_totals, BROAD_BANDS[band], 'crimson', 'N occurrences')
+	freq_by_rank_plot(axis, quot_totals, BROAD_BANDS[band], 'cadetblue', 'quotation count')
+	freq_by_rank_plot(axis, text_totals, BROAD_BANDS[band], 'darkorange', 'text count')
+	freq_by_rank_plot(axis, freq_totals, BROAD_BANDS[band], 'crimson', 'token count')
 	
 	if j == 0:
 		axis.set_ylabel('Lemma frequency')
+		axis.legend(frameon=False, markerfirst=False)
+	else:
+		axis.set_yticklabels([])
+
+
+	axis = fig.add_subplot(grid_nvar[0, j])
+
+	combined_count = count_quot + count_text
+	quot_nvars = combined_count[ combined_count[band] > 0 ].groupby('lemma')[band].count().to_list()
+	n_lemmata_quot = len(combined_count[ combined_count[band] > 0 ]['lemma'].unique())
+	n_variants_plot(axis, quot_nvars, 'black', n_lemmata_quot)
+
+	if j == 0:
+		axis.set_ylabel('Proportion of lemmata')
 	else:
 		axis.set_yticklabels([])
 
@@ -73,18 +96,18 @@ for band_i in range(1, 14):
 	band_header = f'band_{band_i}'
 	print(band_header)
 	quot_entropy_by_band.append(
-		count_quot.groupby('lemma')[band_header].apply(lambda x: entropy(x)).to_numpy().mean()
+		count_quot.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 	text_entropy_by_band.append(
-		count_text.groupby('lemma')[band_header].apply(lambda x: entropy(x)).to_numpy().mean()
+		count_text.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 	freq_entropy_by_band.append(
-		count_freq.groupby('lemma')[band_header].apply(lambda x: entropy(x)).to_numpy().mean()
+		count_freq.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 
-axis.plot(range(1, 14), quot_entropy_by_band, '-o', color='cadetblue', label='N OED quotations')
-axis.plot(range(1, 14), text_entropy_by_band, '-o', color='darkorange', label='N corpus texts')
-axis.plot(range(1, 14), freq_entropy_by_band, '-o', color='crimson', label='N corpus occurrences')
+axis.plot(range(1, 14), quot_entropy_by_band, '-o', color='cadetblue', label='$N$ OED quotations')
+axis.plot(range(1, 14), text_entropy_by_band, '-o', color='darkorange', label='$N$ corpus texts')
+axis.plot(range(1, 14), freq_entropy_by_band, '-o', color='crimson', label='$N$ corpus tokens')
 
 # axis.plot(range(1, 14), range(1, 14), '-o', color='cadetblue', label='N OED quotations')
 # axis.plot(range(1, 14), range(1, 14), '-o', color='darkorange', label='N corpus texts')
@@ -96,13 +119,13 @@ axis.set_ylabel('Mean variant entropy (bits)')
 axis.set_xticks(list(range(1, 14)))
 axis.set_xticklabels(list(range(1, 14)))
 axis.set_xlim(0.5, 13.5)
+axis.set_ylim(0, 1)
 
 axis.axvline(3.5, color='gray', linewidth=0.5, linestyle='--')
 axis.axvline(7.5, color='gray', linewidth=0.5, linestyle='--')
 axis.axvline(10.5, color='gray', linewidth=0.5, linestyle='--')
 
-axis.legend(frameon=False, markerfirst=False)
-
+# axis.legend(frameon=False, markerfirst=False)
 
 fig.tight_layout(pad=0.5, h_pad=1.0, w_pad=2.0)
 fig.savefig(ROOT / 'manuscript' / 'figs' / 'entropy_plot.pdf')
