@@ -59,8 +59,6 @@ HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
 
-OED_MAPPING_OVERRIDE = {'firm_n': 'firm_n2'}
-
 
 class UnauthorizedAccess(Exception):
 	pass
@@ -130,10 +128,7 @@ class OEDLemmaParser:
 		Download the lemma's webpage from the OED and store a copy in the
 		output_dir. Return the BeautifulSoup parsing of the HTML.
 		'''
-		if self.lemma_id in OED_MAPPING_OVERRIDE:
-			url = f'https://www.oed.com/dictionary/{OED_MAPPING_OVERRIDE[self.lemma_id]}'
-		else:
-			url = f'https://www.oed.com/dictionary/{self.lemma_id}'
+		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
 		req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
 		if req.status_code == 404:
 			req = requests.get(url + '1', headers=HTTP_REQUEST_HEADERS)
