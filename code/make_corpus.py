@@ -158,17 +158,6 @@ def parse_clmet(corpus, input_dir):
 		)
 
 
-def count_corpus(corpus):
-	counts_by_band = {}
-	for band, documents in corpus.items():
-		word_counts = defaultdict(int)
-		for document in documents:
-			for token in document['text'].split(' '):
-				word, pos = token.split('_')
-				word_counts[word] += 1
-		print(band, f'{len(documents):,}', f'{sum(word_counts.values()):,}', f'{len(word_counts):,}')
-
-
 if __name__ == '__main__':
 
 	corpus = {
@@ -204,5 +193,3 @@ if __name__ == '__main__':
 		corpus,
 		ROOT / 'data' / 'corpus.json'
 	)
-
-	count_corpus(corpus)
