@@ -42,9 +42,9 @@ def n_variants_plot(axis, number_of_variants, color, n, greater_than=8):
 	axis.set_xticks(list(range(1, greater_than+2)))
 	axis.set_xticklabels(list(range(1, greater_than+1)) + [f'>{greater_than}'])
 
-count_quot = pd.read_csv(DATA / 'count_quot.csv')
-count_text = pd.read_csv(DATA / 'count_text.csv')
-count_freq = pd.read_csv(DATA / 'count_freq.csv')
+count_quot = pd.read_csv(DATA / 'spelleng_quote.csv')
+count_text = pd.read_csv(DATA / 'spelleng_text.csv')
+count_freq = pd.read_csv(DATA / 'spelleng_token.csv')
 
 
 fig = plt.figure(figsize=(7.48, 5))
