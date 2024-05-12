@@ -1,12 +1,8 @@
 manuscript/
-analysis/
 private/
 
 data/corpora/clmet/
 data/corpora/HC_XML_Master_v9f.xml
-data/oed_cache/
-data/oed_quotations*
-
-data/helsinki_corpus.json
-data/helsinki_corpus_subbanded.json
+data/oed_cache/*.html
+data/oed_data/*.json
 data/corpus.json
