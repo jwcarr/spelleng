@@ -130,8 +130,6 @@ class OEDLemmaParser:
 		'''
 		url = f'https://www.oed.com/dictionary/{self.lemma_id}'
 		req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
-		if req.status_code == 404:
-			req = requests.get(url + '1', headers=HTTP_REQUEST_HEADERS)
 		if req.status_code != 200:
 			raise NoEntry('No entry found')
 		lemma_page = BeautifulSoup(req.text, 'lxml')
