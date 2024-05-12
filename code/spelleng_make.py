@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+import re
 import utils
 import numpy as np
 import pandas as pd
@@ -7,7 +8,11 @@ import pandas as pd
 
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
-OED_QUOTATIONS = DATA / 'oed_quotations'
+OED_DATA = DATA / 'oed_data'
+SPELLENG = DATA / 'spelleng'
+
+LEMMA_ID_PARSER = re.compile(r'(?P<wordform>\w+)_(?P<pos>[a-z]+)\d*')
+WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
 CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj'}
 
@@ -62,8 +67,9 @@ def count_quotations(lemma, variants, quotation_data):
 			counts[variant_i, band_i] += 1
 	return counts
 
-def count_corpus(lemma, variants, quotation_data, corpus):
-	pos = CLMET_POS_MAP[ lemma.split('_')[1] ]
+def count_corpus(lemma_id, variants, quotation_data, corpus):
+	parsed_lemma_id = LEMMA_ID_PARSER.match(lemma_id)
+	pos = CLMET_POS_MAP[ parsed_lemma_id['pos'] ]
 	variants_untagged = [f'{v}_' for v in variants]
 	variants_tagged = [f'{v}_{pos}' for v in variants]
 	counts_texts = np.zeros((len(variants), len(BANDS)), dtype=int)
@@ -96,44 +102,47 @@ if __name__ == '__main__':
 	corpus = utils.json_read(DATA / 'corpus.json')
 	add_counts_to_corpus(corpus)
 
-	quot_data_frames = []
-	text_data_frames = []
-	freq_data_frames = []
+	dataframes_quot = []
+	dataframes_text = []
+	dataframes_tokn = []
+
 	for lemma_i, lemma in enumerate(lemmata):
+
 		if lemma_i % 100 == 0:
 			print(lemma_i, lemma)
 
-		quotation_data_path = OED_QUOTATIONS / f'{lemma}.json'
-		if not quotation_data_path.exists():
+		oed_data_path = OED_DATA / f'{lemma}.json'
+		oed_data = utils.json_read(oed_data_path)
+
+		if not WORD_REGEX.fullmatch(oed_data['headword_form']):
 			continue
 
-		quotation_data = utils.json_read(quotation_data_path)
-		variants = sorted(list(quotation_data.keys()))
+		variants = sorted(list(oed_data['variants'].keys()))
 		
-		quot_count = count_quotations(lemma, variants, quotation_data)
-		text_count, freq_count = count_corpus(lemma, variants, quotation_data, corpus)
+		quot_count = count_quotations(lemma, variants, oed_data['variants'])
+		text_count, tokn_count = count_corpus(lemma, variants, oed_data['variants'], corpus)
 
 		variants_to_keep = np.where( (quot_count + text_count).sum(axis=1) > 0 )[0]
-		final_variants = [variant for variant_i, variant in enumerate(variants)	 if variant_i in variants_to_keep]
+		final_variants = [variant for variant_i, variant in enumerate(variants) if variant_i in variants_to_keep]
 
-		quot_data_frames.append(
+		dataframes_quot.append(
 			create_dataframe(lemma, final_variants, quot_count[variants_to_keep, :])
 		)
-		text_data_frames.append(
+		dataframes_text.append(
 			create_dataframe(lemma, final_variants, text_count[variants_to_keep, :])
 		)
-		freq_data_frames.append(
-			create_dataframe(lemma, final_variants, freq_count[variants_to_keep, :])
+		dataframes_tokn.append(
+			create_dataframe(lemma, final_variants, tokn_count[variants_to_keep, :])
 		)
 
-	quotation_dataset = pd.concat(quot_data_frames, ignore_index=True)
+	quotation_dataset = pd.concat(dataframes_quot, ignore_index=True)
 	add_broad_band_counts(quotation_dataset)
-	quotation_dataset.to_csv(DATA / 'count_quot.csv', index=False)
+	quotation_dataset.to_csv(SPELLENG / 'spelleng_quote.csv', index=False)
 
-	corpus_dataset = pd.concat(text_data_frames, ignore_index=True)
+	corpus_dataset = pd.concat(dataframes_text, ignore_index=True)
 	add_broad_band_counts(corpus_dataset)
-	corpus_dataset.to_csv(DATA / 'count_text.csv', index=False)
+	corpus_dataset.to_csv(SPELLENG / 'spelleng_text.csv', index=False)
 
-	corpus_dataset = pd.concat(freq_data_frames, ignore_index=True)
+	corpus_dataset = pd.concat(dataframes_tokn, ignore_index=True)
 	add_broad_band_counts(corpus_dataset)
-	corpus_dataset.to_csv(DATA / 'count_freq.csv', index=False)
+	corpus_dataset.to_csv(SPELLENG / 'spelleng_token.csv', index=False)
