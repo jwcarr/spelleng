@@ -2,6 +2,7 @@ from pathlib import Path
 from copy import deepcopy
 import re
 import requests
+from multiprocessing import Pool
 from bs4 import BeautifulSoup
 import utils
 
@@ -9,6 +10,7 @@ import utils
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
 OED_CACHE_DIR = DATA / 'oed_cache'
+OED_DATA_DIR = DATA / 'oed_data'
 
 
 DATE_REGEX = re.compile(r'^\[?(?P<period>(e|l)?OE)|^\[?(?P<year_with_approximator>(c|a|\?c|\?a)?\??(?P<year>\d{4}))')
@@ -19,7 +21,7 @@ VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<not
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
 OED_URL_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_\w+)')
-OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(adj|n|v))1?')
+OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(?P<pos>adj|n|v))\d?')
 
 OED_AFFIXES = utils.json_read(DATA / 'oed_affixes.json')
 ALT_AFFIX_FORMS = utils.json_read(DATA / 'oed_alt_affix_forms.json')
@@ -104,9 +106,29 @@ class OEDLemmaParser:
 		self.quotations = self._extract_quotations()
 		self.variants_to_quotations = self._create_mapping()
 
-	def save(self, output_dir):
-		output_file = output_dir / f'{self.lemma_id}.json'
-		utils.json_write(self.variants_to_quotations, output_file)
+	def save(self):
+		output_file = OED_DATA_DIR / f'{self.lemma_id}.json'
+		output_data = {
+			'lemma_id': self.lemma_id,
+			'headword_form': self.get_headword_form(),
+			'part_of_speech': self.get_part_of_speech(),
+			'pronunciation': self.get_pronunciation(),
+			'variants': self.variants_to_quotations,
+		}
+		utils.json_write(output_data, output_file)
+
+	def get_headword_form(self):
+		if match := self.lemma_page.find('span', class_='headword'):
+			return match.text.strip()
+		return None
+
+	def get_part_of_speech(self):
+		return OED_LEMMA_MAPPER.match(self.lemma_id)['pos'][0]
+
+	def get_pronunciation(self):
+		if match := self.lemma_page.find('div', class_='pronunciation-ipa'):
+			return match.text.strip().replace('/', '')
+		return None
 
 	def get_derivatives(self):
 		derivatives = []
@@ -565,44 +587,29 @@ class OEDLemmaParser:
 		return variant_quote_map
 
 
-def main(lemmata_file, output_dir, parse_only=False, show_warnings=False, start_from=None, stop_at=None):
-	
-	if not output_dir.exists():
-		output_dir.mkdir()
-	
+def process_lemma(lemma):
+	oed_lemma_parser = OEDLemmaParser(lemma)
+	try:
+		oed_lemma_parser.access()
+	except UnauthorizedAccess:
+		print('Access to OED not authorized; stopping.')
+		quit()
+	except Exception:
+		print(f'- Failed to access {lemma}; continuing...')
+		return
+	try:
+		oed_lemma_parser.parse()
+	except Exception:
+		print(f'- Failed to parse {lemma}; continuing...')
+		return
+	if len(oed_lemma_parser.variants_to_quotations) > 0:
+		oed_lemma_parser.save()
+
+
+def main(lemmata_file, n_cores=None):
 	lemmata = list(utils.json_read(lemmata_file).keys())
-	
-	if start_from is None:
-		start_from = 0
-	if stop_at is None:
-		stop_at = len(lemmata)
-	
-	for lemma_i in range(start_from, stop_at):
-		lemma = lemmata[lemma_i]
-
-		if parse_only and not (OED_CACHE_DIR / f'{lemma}.html').exists():
-			continue
-		
-		print(lemma_i, lemma)
-		
-		oed_lemma_parser = OEDLemmaParser(lemma, show_warnings=show_warnings)
-
-		try:
-			oed_lemma_parser.access()
-		except UnauthorizedAccess:
-			print('Access to OED not authorized; stopping.')
-			break
-		except Exception:
-			print(f'- Failed to access {lemma}; continuing...')
-
-		try:
-			oed_lemma_parser.parse()
-		except Exception:
-			print(f'- Failed to parse {lemma}; continuing...')
-			continue
-
-		if len(oed_lemma_parser.variants_to_quotations) > 0:
-			oed_lemma_parser.save(output_dir)
+	with Pool(n_cores) as pool:
+		pool.map(process_lemma, lemmata)
 
 
 if __name__ == '__main__':
@@ -611,18 +618,10 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument('lemmata_file', action='store', type=str, help='json file listing lemmata to extract/parse')
-	parser.add_argument('output_dir', action='store', type=str, help='directory to store json output for each lemma')
-	parser.add_argument('--parse_only', action='store_true', help='do not attempt to download if unavailable')
-	parser.add_argument('--warnings', action='store_true', help='show parser warnings')
-	parser.add_argument('--start', action='store', type=int, help='lemma number to start from')
-	parser.add_argument('--stop', action='store', type=int, help='lemma number to stop at')
+	parser.add_argument('--n_cores', action='store', default=6, type=int, help='number of cores to use')
 	args = parser.parse_args()
 
 	main(
 		Path(args.lemmata_file),
-		Path(args.output_dir),
-		parse_only=args.parse_only,
-		show_warnings=args.warnings,
-		start_from=args.start,
-		stop_at=args.stop,
+		n_cores=args.n_cores,
 	)
