@@ -2,8 +2,8 @@ manuscript/
 analysis/
 private/
 
-data/helsinki/
-data/clmet/
+data/corpora/clmet/
+data/corpora/HC_XML_Master_v9f.xml
 data/oed_cache/
 data/oed_quotations*
 
