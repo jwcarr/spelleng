@@ -175,6 +175,6 @@ def json_read(input_file):
 def test_all():
 	for lemma, variant_counts_expected in EXPECTED_COUNTS.items():
 		variant_counts_expected = sorted([(v, c) for v, c in variant_counts_expected.items()])
-		lemma_data = json_read(OED_DATA / f'{lemma}.json')
+		lemma_data = json_read(OED_DATA / f'{lemma}.json')['variants']
 		variant_counts = sorted([(v, len(data['quotations'])) for v, data in lemma_data.items()])
 		assert variant_counts == variant_counts_expected
