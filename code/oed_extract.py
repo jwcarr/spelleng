@@ -22,7 +22,7 @@ OED_URL_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_\w+)')
 OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(adj|n|v))1?')
 
 OED_AFFIXES = utils.json_read(DATA / 'oed_affixes.json')
-ALT_AFFIX_FORMS = utils.json_read(DATA / 'alt_affix_forms.json')
+ALT_AFFIX_FORMS = utils.json_read(DATA / 'oed_alt_affix_forms.json')
 MANUAL_INCLUSIONS = utils.json_read(DATA / 'manual_inclusions.json')
 MANUAL_EXCLUSIONS = utils.json_read(DATA / 'manual_exclusions.json')
 
