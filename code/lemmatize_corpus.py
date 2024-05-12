@@ -1,8 +1,9 @@
+from collections import defaultdict
 from pathlib import Path
 import re
 import requests
 from bs4 import BeautifulSoup
-from utils import json_read, json_write
+import utils
 
 
 ROOT = Path(__file__).parent.parent.resolve()
@@ -11,12 +12,14 @@ HTTP_REQUEST_HEADERS = {
 	'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
 }
 
-LEMMA_ID_PARSER = re.compile(r'/dictionary/(?P<lem>[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+?)_(?P<pos>adj|n|v)(?P<num>\d?)\?')
+LEMMA_LINK_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_(?P<pos>[a-z]+)\d*)\?')
+LEMMA_ID_PARSER = re.compile(r'(?P<lemma_id>\w+_(?P<pos>[a-z]+)\d*)')
 
-CLMET_POS_REWRITES = {'nn': 'n', 'vb': 'v', 'jj': 'adj'}
+CLMET_POS_REWRITES = {'nn': 'n', 'np': 'n', 'vb': 'v', 'jj': 'adj'}
 
 PERIOD_MAP = {
 	'Old English': {'start': 800, 'end': 1150},
+	'late Old English': {'start': 1050, 'end': 1150},
 	'Middle English': {'start': 1150, 'end': 1500},
 	'1500s': {'start': 1500, 'end': 1600},
 	'1600s': {'start': 1600, 'end': 1700},
@@ -26,8 +29,19 @@ PERIOD_MAP = {
 	'2000s': {'start': 2000, 'end': 2100},
 }
 
+STOP_WORDS = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now', 'may', 'must', 'shall']
 
-def create_token_map(corpus):
+
+def determine_lemma(oed_queries, token, year):
+	wordform, pos = token.split('_')
+	candidate_lemmata = oed_queries.get(wordform, [])
+	for lemma_id, lemma_pos, start, end in candidate_lemmata:
+		if year >= start and year <= end:
+			if pos == '' or CLMET_POS_REWRITES.get(pos[:2], None) == lemma_pos:
+				return lemma_id
+	return None
+
+def create_token_map(corpus, oed_queries=None):
 	token_map = {band: {} for band in corpus}
 	for band, documents in corpus.items():
 		for doc_i, document in enumerate(documents):
@@ -36,12 +50,65 @@ def create_token_map(corpus):
 					token_map[band][token][0].add(doc_i)
 					token_map[band][token][1] += 1
 				else:
-					token_map[band][token] = [{doc_i}, 1, None]
+					if oed_queries:
+						lemma = determine_lemma(oed_queries, token, document['year'])
+					else:
+						lemma = None
+					token_map[band][token] = [{doc_i}, 1, lemma]
 		for token, token_data in token_map[band].items():
 			token_data[0] = len(token_data[0])
 	return token_map
 
+def get_results_for_token(token):
+	url = f'https://www.oed.com/search/dictionary/?scope=Entries&q={token}'
+	req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
+	results_page = BeautifulSoup(req.text, 'lxml')
+	result_divs = results_page.find_all('div', class_='resultsSetItem')
+	results = []
+	for result_div in result_divs:
+		usage_period = result_div.find('span', class_='dateRange').text
+		entry_link = result_div.find('a', class_='viewEntry')['href']
+		if match := LEMMA_LINK_PARSER.match(entry_link):
+			results.append((match['lemma_id'], usage_period))
+	return results
+
+def select_candidate_tokens(token_map):
+	unique_forms = []
+	for band, tokens in token_map.items():
+		if band.startswith('Old English'):
+			continue # ignore Old English
+		for token, (text_count, token_count, lemma_id) in tokens.items():
+			if text_count == 1:
+				continue # ignore tokens attested in only one text
+			wordform, pos = token.split('_')
+			if len(wordform) < 3:
+				continue # ignore tokens shorter than three characters
+			if pos == '' or pos in ('nn', 'jj', 'vb'):
+				# ignore Late Modern tokens other than nouns, verbs, and
+				# adjectives in their base forms
+				unique_forms.append(wordform)
+	return sorted(list(set(unique_forms)))
+
+def search_candidate_tokens(candidate_tokens, results_file, start_from=0):
+	for i, token in enumerate(candidate_tokens):
+		if i < start_from:
+			continue
+		print(i, token)
+		results = {
+			'search_term': token,
+			'results': get_results_for_token(token)
+		}
+		utils.json_write_line(results, results_file)
+
 def parse_period(text_period):
+	if text_period == '':
+		return 800, 2100
+	if text_period == 'Old English':
+		return 800, 1150
+	text_period = text_period.replace('?', '')
+	text_period = text_period.replace('.', '0')
+	if '–' not in text_period:
+		text_period = f'{text_period}–{text_period}'
 	start_text, end_text = text_period.split('–')
 	if start_text.startswith(('a', 'c')):
 		start_text = start_text[1:]
@@ -58,49 +125,53 @@ def parse_period(text_period):
 			end = 2100
 		else:
 			end = PERIOD_MAP[end_text]['end']
-	return start, end
+	return start - 10, end + 10
 
-def get_lemma_for_token(token, target_year, target_pos=None):
-	url = f'https://www.oed.com/search/dictionary/?scope=Entries&q={token}'
-	req = requests.get(url, headers=HTTP_REQUEST_HEADERS)
-	results_page = BeautifulSoup(req.text, 'lxml')
-	result_divs = results_page.find_all('div', class_='resultsSetItem')
-	for result_div in result_divs:
-		usage_period = result_div.find('span', class_='dateRange').text
-		entry_link = result_div.find('a', class_='viewEntry')['href']
-		if match := LEMMA_ID_PARSER.match(entry_link):
-			if target_pos is None or target_pos == match['pos']:
+def process_search_results(results_file):
+	search_results = utils.json_read_lines(results_file, 'search_term')
+	oed_queries = {}
+	for wordform, results in search_results.items():
+		normalized_results = []
+		for lemma_id, usage_period in results['results']:
+			pos = LEMMA_ID_PARSER.match(lemma_id)['pos']
+			try:
 				start, end = parse_period(usage_period)
-				if target_year >= start and target_year <= end:
-					return f"{match['lem']}_{match['pos']}{match['num']}"
-	return None
+			except:
+				print('PERIOD PARSE ERROR:', lemma_id, usage_period)
+			normalized_results.append((lemma_id, pos, start, end))
+		oed_queries[wordform] = normalized_results
+	return oed_queries
 
-def get_unique_forms(token_map):
-	unique_forms = []
+def extract_lemmata(token_map):
+	lemmata = defaultdict(int)
 	for band, tokens in token_map.items():
-		# if not band.startswith('Late'):
-		# 	continue
-		for token, data in tokens.items():
-			if data[0] < 2:
-				continue
-			wordform, pos = token.split('_')
-			if len(wordform) < 3:
-				continue
-			if pos == '' or pos in ('nn', 'jj', 'vb'):
-				unique_forms.append(wordform)
-	return sorted(list(set(unique_forms)))
-
-
-{'search_term': 'minum', 'results':[ ['minnow_n', 1425, 2100],  ]}
+		for token, (text_count, token_count, lemma_id) in tokens.items():
+			if lemma_id:
+				lemma_pos = LEMMA_ID_PARSER.match(lemma_id)['pos']
+				if lemma_pos in ('n', 'v', 'adj'):
+					lemmata[lemma_id] += token_count
+	return {
+		lemma_id: lemmata[lemma_id]
+		for lemma_id in sorted(lemmata, key=lambda k: lemmata[k], reverse=True)
+		if lemma_id.split('_')[0] not in STOP_WORDS
+	}
 
 
 if __name__ == '__main__':
 
-	# corpus = json_read(ROOT / 'data' / 'corpus.json')
-	# token_map = create_token_map(corpus)
-	# json_write(token_map, ROOT / 'data' / 'token_map.json')
+	file_corpus = ROOT / 'data' / 'corpus.json'
+	file_token_map = ROOT / 'data' / 'token_map.json'
+	file_search_results = ROOT / 'data' / 'oed_search_results.json'
 
-	token_map = json_read(ROOT / 'data' / 'token_map.json')
-	print(len(get_unique_forms(token_map)))
+	corpus = utils.json_read(file_corpus)
+	token_map = create_token_map(corpus)
 
-	# print(get_lemma_for_token('minum', 900, None))
+	candidate_tokens = select_candidate_tokens(token_map)
+	# search_candidate_tokens(candidate_tokens, file_search_results, start_from=2)
+	cached_oed_queries = process_search_results(file_search_results)
+
+	token_map_lemmatized = create_token_map(corpus, cached_oed_queries)
+	utils.json_write(token_map_lemmatized, ROOT / 'data' / 'token_map.json')
+
+	lemmata = extract_lemmata(token_map_lemmatized)
+	utils.json_write(lemmata, ROOT / 'data' / 'lemmata_new.json')
