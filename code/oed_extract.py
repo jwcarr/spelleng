@@ -119,7 +119,7 @@ class OEDLemmaParser:
 
 	def get_headword_form(self):
 		if match := self.lemma_page.find('span', class_='headword'):
-			return match.text.strip()
+			return match.text.strip().replace('† ', '').split(' | ')[0]
 		return None
 
 	def get_part_of_speech(self):
