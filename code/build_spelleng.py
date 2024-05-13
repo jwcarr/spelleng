@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
 OED_DATA = DATA / 'oed_data'
-SPELLENG = DATA / 'spelleng'
+SPELLENG = ROOT / 'spelleng'
 
 LEMMA_ID_PARSER = re.compile(r'(?P<wordform>\w+)_(?P<pos>[a-z]+)\d*')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
@@ -41,9 +41,12 @@ def determine_band(year):
 			return band_i
 	return None
 
-def create_dataframe(lemma, variants, counts):
+def create_dataframe(lemma, headword_form, part_of_speech, pronunciation, variants, counts):
 	data = {
-		'lemma': [lemma] * len(variants),
+		'lemma_id': [lemma] * len(variants),
+		'headword_form': [headword_form] * len(variants),
+		'part_of_speech': [part_of_speech] * len(variants),
+		'pronunciation': [pronunciation] * len(variants),
 		'variant': variants,
 	}
 	data.update(
@@ -97,7 +100,6 @@ def add_counts_to_corpus(corpus):
 if __name__ == '__main__':
 
 	lemmata = utils.json_read(DATA / 'lemmata.json')
-	lemmata = sorted(list(lemmata.keys()))
 
 	corpus = utils.json_read(DATA / 'corpus.json')
 	add_counts_to_corpus(corpus)
@@ -106,15 +108,22 @@ if __name__ == '__main__':
 	dataframes_text = []
 	dataframes_tokn = []
 
-	for lemma_i, lemma in enumerate(lemmata):
+	for lemma_i, lemma in enumerate(sorted(list(lemmata.keys()))):
 
 		if lemma_i % 100 == 0:
 			print(lemma_i, lemma)
 
+		if lemmata[lemma] == 1:
+			continue
+
 		oed_data_path = OED_DATA / f'{lemma}.json'
 		oed_data = utils.json_read(oed_data_path)
 
-		if not WORD_REGEX.fullmatch(oed_data['headword_form']):
+		headword_form = oed_data['headword_form']
+		part_of_speech = oed_data['part_of_speech']
+		pronunciation = oed_data['pronunciation']
+
+		if not WORD_REGEX.fullmatch(headword_form):
 			continue
 
 		variants = sorted(list(oed_data['variants'].keys()))
@@ -126,13 +135,13 @@ if __name__ == '__main__':
 		final_variants = [variant for variant_i, variant in enumerate(variants) if variant_i in variants_to_keep]
 
 		dataframes_quot.append(
-			create_dataframe(lemma, final_variants, quot_count[variants_to_keep, :])
+			create_dataframe(lemma, headword_form, part_of_speech, pronunciation, final_variants, quot_count[variants_to_keep, :])
 		)
 		dataframes_text.append(
-			create_dataframe(lemma, final_variants, text_count[variants_to_keep, :])
+			create_dataframe(lemma, headword_form, part_of_speech, pronunciation, final_variants, text_count[variants_to_keep, :])
 		)
 		dataframes_tokn.append(
-			create_dataframe(lemma, final_variants, tokn_count[variants_to_keep, :])
+			create_dataframe(lemma, headword_form, part_of_speech, pronunciation, final_variants, tokn_count[variants_to_keep, :])
 		)
 
 	quotation_dataset = pd.concat(dataframes_quot, ignore_index=True)
