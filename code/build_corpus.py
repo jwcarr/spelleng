@@ -178,12 +178,12 @@ if __name__ == '__main__':
 
 	parse_helsinki(
 		corpus,
-		ROOT / 'data' / 'helsinki' / 'HC_XML_Master_v9f.xml',
+		ROOT / 'data' / 'corpora' / 'HC_XML_Master_v9f.xml',
 	)
 
 	parse_clmet(
 		corpus,
-		ROOT / 'data' / 'clmet' / 'corpus' / 'txt' / 'pos',
+		ROOT / 'data' / 'corpora' / 'clmet' / 'corpus' / 'txt' / 'pos',
 	)
 
 	for band, documents in corpus.items():
