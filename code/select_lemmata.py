@@ -87,8 +87,6 @@ def select_candidate_lemmata(corpus_counts):
 	'''
 	unique_forms = []
 	for band, tokens in corpus_counts.items():
-		if band.startswith('Old English'):
-			continue # ignore Old English
 		for token, (text_count, token_count, lemma_id) in tokens.items():
 			if text_count == 1:
 				continue # ignore tokens attested in only one text
