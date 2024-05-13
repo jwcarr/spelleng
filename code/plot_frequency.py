@@ -42,9 +42,9 @@ def n_variants_plot(axis, number_of_variants, color, n, greater_than=8):
 	axis.set_xticks(list(range(1, greater_than+2)))
 	axis.set_xticklabels(list(range(1, greater_than+1)) + [f'>{greater_than}'])
 
-count_quot = pd.read_csv(DATA / 'spelleng_quote.csv')
-count_text = pd.read_csv(DATA / 'spelleng_text.csv')
-count_freq = pd.read_csv(DATA / 'spelleng_token.csv')
+count_quot = pd.read_csv(ROOT / 'spelleng' / 'spelleng_quote.csv')
+count_text = pd.read_csv(ROOT / 'spelleng' / 'spelleng_text.csv')
+count_freq = pd.read_csv(ROOT / 'spelleng' / 'spelleng_token.csv')
 
 
 fig = plt.figure(figsize=(7.48, 5))
@@ -58,9 +58,9 @@ for j, band in enumerate(BROAD_BANDS):
 
 	axis = fig.add_subplot(grid_freq[0, j])
 
-	quot_totals = count_quot.groupby('lemma')[band].sum().to_numpy()
-	text_totals = count_text.groupby('lemma')[band].sum().to_numpy()
-	freq_totals = count_freq.groupby('lemma')[band].sum().to_numpy()
+	quot_totals = count_quot.groupby('lemma_id')[band].sum().to_numpy()
+	text_totals = count_text.groupby('lemma_id')[band].sum().to_numpy()
+	freq_totals = count_freq.groupby('lemma_id')[band].sum().to_numpy()
 
 	freq_by_rank_plot(axis, quot_totals, BROAD_BANDS[band], 'cadetblue', 'quotation count')
 	freq_by_rank_plot(axis, text_totals, BROAD_BANDS[band], 'darkorange', 'text count')
@@ -76,8 +76,8 @@ for j, band in enumerate(BROAD_BANDS):
 	axis = fig.add_subplot(grid_nvar[0, j])
 
 	combined_count = count_quot + count_text
-	quot_nvars = combined_count[ combined_count[band] > 0 ].groupby('lemma')[band].count().to_list()
-	n_lemmata_quot = len(combined_count[ combined_count[band] > 0 ]['lemma'].unique())
+	quot_nvars = combined_count[ combined_count[band] > 0 ].groupby('lemma_id')[band].count().to_list()
+	n_lemmata_quot = len(combined_count[ combined_count[band] > 0 ]['lemma_id'].unique())
 	n_variants_plot(axis, quot_nvars, 'black', n_lemmata_quot)
 
 	if j == 0:
@@ -96,13 +96,13 @@ for band_i in range(1, 14):
 	band_header = f'band_{band_i}'
 	print(band_header)
 	quot_entropy_by_band.append(
-		count_quot.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
+		count_quot.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 	text_entropy_by_band.append(
-		count_text.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
+		count_text.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 	freq_entropy_by_band.append(
-		count_freq.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
+		count_freq.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
 	)
 
 axis.plot(range(1, 14), quot_entropy_by_band, '-o', color='cadetblue', label='$N$ OED quotations')
