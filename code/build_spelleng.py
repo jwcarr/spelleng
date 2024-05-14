@@ -11,7 +11,7 @@ DATA = ROOT / 'data'
 OED_DATA = DATA / 'oed_data'
 SPELLENG = ROOT / 'spelleng'
 
-LEMMA_ID_PARSER = re.compile(r'(?P<wordform>\w+)_(?P<pos>[a-z]+)\d*')
+LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
 CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj'}

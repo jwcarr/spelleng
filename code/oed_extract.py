@@ -22,7 +22,7 @@ VARIANT_FORM_PARSER = re.compile(r'(?P<gnote>.*?)=\[(?P<form>.+?)\]=(\s\((?P<not
 OPTIONAL_LETTERS = re.compile(r'-?\w*\((?P<letter>\w)\)\w*', re.IGNORECASE)
 OPTIONAL_FINAL_LETTER = re.compile(r'\([a-z]$', re.IGNORECASE)
 OED_URL_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_\w+)')
-OED_LEMMA_MAPPER = re.compile(r'(?P<id>\w+_(?P<pos>adj|n|v))\d?')
+LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 
 OED_AFFIXES = utils.json_read(DATA / 'oed_affixes.json')
 ALT_AFFIX_FORMS = utils.json_read(DATA / 'oed_alt_affix_forms.json')
@@ -124,7 +124,7 @@ class OEDLemmaParser:
 		return None
 
 	def get_part_of_speech(self):
-		return OED_LEMMA_MAPPER.match(self.lemma_id)['pos'][0]
+		return LEMMA_ID_PARSER.match(self.lemma_id)['pos']
 
 	def get_pronunciation(self):
 		if match := self.lemma_page.find('div', class_='pronunciation-ipa'):
@@ -418,17 +418,17 @@ class OEDLemmaParser:
 			except:
 				continue
 			if cross_ref_id != self.lemma_id:
-				cross_ref_ids.append(cross_ref_id)
-		lemma_refs = [cross_ref for cross_ref in cross_ref_ids if cross_ref.endswith(('_n', '_v', '_adj', '_n1', '_v1', '_adj1'))]
-		affix_refs = [cross_ref for cross_ref in cross_ref_ids if cross_ref.endswith(('_suffix', '_suffix1', '_prefix', '_prefix1'))]
-		
+				cross_ref_ids.append(LEMMA_ID_PARSER.match(cross_ref_id))
+		lemma_refs = [cross_ref['id'] for cross_ref in cross_ref_ids if cross_ref['pos'] in ('n', 'v', 'adj', 'adv')]
+		affix_refs = [cross_ref['id'] for cross_ref in cross_ref_ids if cross_ref['pos'] in ('prefix', 'suffix')]
+
 		if len(lemma_refs) == 1 and len(affix_refs) == 1:
 			lemma_ref = lemma_refs[0]
 			affix_ref = affix_refs[0]
 			if affix_ref not in OED_AFFIXES:
 				return
-			if lemma_match := OED_LEMMA_MAPPER.search(lemma_ref):
-				sub_lemma_id = lemma_match["id"]
+			if lemma_match := LEMMA_ID_PARSER.search(lemma_ref):
+				sub_lemma_id = lemma_match['id']
 				if (OED_CACHE_DIR / f'{sub_lemma_id}.html').exists():
 					subparser = OEDLemmaParser(sub_lemma_id, do_not_resolve_cross_references=True)
 					subparser.access()
@@ -436,7 +436,7 @@ class OEDLemmaParser:
 					head_variants = subparser._temp_variants
 			
 					affix, affix_type = affix_ref.split('_')
-					if affix_type.endswith('1'):
+					if affix_type.endswith(('1', '2')):
 						affix_type = affix_type[:-1]
 					if affix_type == 'prefix':
 						search_string = f'^{affix}'
@@ -457,7 +457,7 @@ class OEDLemmaParser:
 			if affix_ref not in OED_AFFIXES:
 				return
 			affix, affix_type = affix_ref.split('_')
-			if affix_type.endswith('1'):
+			if affix_type.endswith(('1', '2')):
 				affix_type = affix_type[:-1]
 			if affix_type == 'prefix':
 				search_string = f'^{affix}'

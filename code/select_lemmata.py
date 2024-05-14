@@ -14,7 +14,7 @@ HTTP_REQUEST_HEADERS = {
 }
 
 LEMMA_LINK_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_(?P<pos>[a-z]+)\d*)\?')
-LEMMA_ID_PARSER = re.compile(r'(?P<wordform>\w+)_(?P<pos>[a-z]+)\d*')
+LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 
 CLMET_POS_REWRITES = {'nn': 'n', 'np': 'n', 'vb': 'v', 'jj': 'adj'}
 
@@ -181,7 +181,7 @@ def extract_lemmata(token_map):
 		for token, (text_count, token_count, lemma_id) in tokens.items():
 			if lemma_id:
 				parsed_lemma_id = LEMMA_ID_PARSER.match(lemma_id)
-				if parsed_lemma_id['wordform'] in STOP_WORDS:
+				if parsed_lemma_id['form'] in STOP_WORDS:
 					continue
 				if parsed_lemma_id['pos'] in ('n', 'v', 'adj'):
 					lemmata[lemma_id] += token_count
