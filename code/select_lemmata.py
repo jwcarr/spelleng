@@ -16,7 +16,7 @@ HTTP_REQUEST_HEADERS = {
 LEMMA_LINK_PARSER = re.compile(r'/dictionary/(?P<lemma_id>\w+_(?P<pos>[a-z]+)\d*)\?')
 LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 
-CLMET_POS_REWRITES = {'nn': 'n', 'np': 'n', 'vb': 'v', 'jj': 'adj'}
+CLMET_POS_REWRITES = {'nn': 'n', 'np': 'n', 'vb': 'v', 'jj': 'adj', 'rb': 'adv'}
 
 PERIOD_MAP = {
 	'Old English': {'start': 800, 'end': 1150},
@@ -93,7 +93,7 @@ def select_candidate_lemmata(corpus_counts):
 			wordform, pos = token.split('_')
 			if len(wordform) < 3:
 				continue # ignore tokens shorter than three characters
-			if pos == '' or pos in ('nn', 'jj', 'vb'):
+			if pos == '' or pos in ('nn', 'jj', 'vb', 'rb'):
 				# ignore Late Modern tokens other than nouns, verbs, and
 				# adjectives in their base forms
 				unique_forms.append(wordform)
@@ -183,7 +183,7 @@ def extract_lemmata(token_map):
 				parsed_lemma_id = LEMMA_ID_PARSER.match(lemma_id)
 				if parsed_lemma_id['form'] in STOP_WORDS:
 					continue
-				if parsed_lemma_id['pos'] in ('n', 'v', 'adj'):
+				if parsed_lemma_id['pos'] in ('n', 'v', 'adj', 'adv'):
 					lemmata[lemma_id] += token_count
 	return {
 		lemma_id: lemmata[lemma_id]

@@ -137,7 +137,7 @@ class OEDLemmaParser:
 			if link := derivative.find('a'):
 				derivative_id = link['href'].removeprefix('/dictionary/')
 				headword, pos = derivative_id.split('_')
-				if pos.startswith(('n', 'v', 'adj')) and WORD_REGEX.fullmatch(headword):
+				if pos.startswith(('n', 'v', 'adj', 'adv')) and WORD_REGEX.fullmatch(headword):
 					derivatives.append(derivative_id)
 		return derivatives
 

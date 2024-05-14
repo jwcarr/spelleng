@@ -14,7 +14,7 @@ SPELLENG = ROOT / 'spelleng'
 LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
-CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj'}
+CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj', 'adv': 'rb'}
 
 BANDS = [
 	( 800,  950, "Old English (I & II)"),
