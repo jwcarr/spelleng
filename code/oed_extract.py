@@ -1,5 +1,6 @@
 from pathlib import Path
 from copy import deepcopy
+from random import shuffle
 import re
 import requests
 from multiprocessing import Pool
@@ -608,6 +609,7 @@ def process_lemma(lemma):
 
 def main(lemmata_file, n_cores=None):
 	lemmata = list(utils.json_read(lemmata_file).keys())
+	shuffle(lemmata)
 	with Pool(n_cores) as pool:
 		pool.map(process_lemma, lemmata)
 
