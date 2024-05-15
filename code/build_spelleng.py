@@ -44,19 +44,19 @@ def determine_band(year):
 def create_dataframe(lemma, headword_form, part_of_speech, pronunciation, variants, counts):
 	data = {
 		'lemma_id': [lemma] * len(variants),
-		'headword_form': [headword_form] * len(variants),
-		'part_of_speech': [part_of_speech] * len(variants),
+		'headword': [headword_form] * len(variants),
+		'pos': [part_of_speech] * len(variants),
 		'pronunciation': [pronunciation] * len(variants),
 		'variant': variants,
 	}
 	data.update(
-		{f'band_{i + 1}': counts[:, i] for i in range(len(BANDS))}
+		{f'band{i + 1}': counts[:, i] for i in range(len(BANDS))}
 	)
 	return pd.DataFrame(data)
 
 def add_broad_band_counts(dataset):
 	for broad_band, narrow_bands in BROAD_BANDS.items():
-		columns = [f'band_{band_i}' for band_i in narrow_bands]
+		columns = [f'band{band_i}' for band_i in narrow_bands]
 		dataset[broad_band] = dataset[columns].sum(axis=1)
 	dataset['total'] = dataset[ list(BROAD_BANDS.keys()) ].sum(axis=1)
 

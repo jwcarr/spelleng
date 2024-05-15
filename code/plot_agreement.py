@@ -9,6 +9,7 @@ plt.rcParams.update({'font.sans-serif': 'Helvetica Neue', 'font.size': 7})
 
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
+SPELLENG = ROOT / 'spelleng'
 
 
 def determine_dominant_form(counts, variants):
@@ -30,17 +31,17 @@ def agreement_on_dominant_form(variants1, variants2):
 def calculate_agreement(counts1, counts2, variants):
 	n_bands_in_agreement = 0
 	for band_i in range(1, 14):
-		band_counts_1 = counts1[f'band_{band_i}'].to_numpy()
-		band_counts_2 = counts2[f'band_{band_i}'].to_numpy()
+		band_counts_1 = counts1[f'band{band_i}'].to_numpy()
+		band_counts_2 = counts2[f'band{band_i}'].to_numpy()
 		dom_forms1 = determine_dominant_form(band_counts_1, variants)
 		dom_forms2 = determine_dominant_form(band_counts_2, variants)
 		n_bands_in_agreement += agreement_on_dominant_form(dom_forms1, dom_forms2)
 	return n_bands_in_agreement
 
 def make_agreement_figure(counts_oed, counts_cor, output_file):
-	lemmata = counts_oed['lemma'].unique()
-	counts_oed = counts_oed.groupby('lemma')
-	counts_cor = counts_cor.groupby('lemma')
+	lemmata = counts_oed['lemma_id'].unique()
+	counts_oed = counts_oed.groupby('lemma_id')
+	counts_cor = counts_cor.groupby('lemma_id')
 	agreements = []
 	for i, lemma in enumerate(lemmata):
 		if i % 1000 == 0:
@@ -56,6 +57,7 @@ def make_agreement_figure(counts_oed, counts_cor, output_file):
 	axis.bar(range(0, 14), histogram, color='black')
 	axis.set_xticks(list(range(0, 14)))
 	axis.set_xticklabels(list(range(0, 14)))
+	axis.set_ylim(0, 8000)
 	axis.set_xlabel('Agreement score')
 	axis.set_ylabel('Number of lemmata')
 	fig.tight_layout()
@@ -64,9 +66,9 @@ def make_agreement_figure(counts_oed, counts_cor, output_file):
 
 if __name__ == '__main__':
 
-	counts_quot = pd.read_csv(DATA / 'count_quot.csv')
-	counts_text = pd.read_csv(DATA / 'count_text.csv')
-	counts_freq = pd.read_csv(DATA / 'count_freq.csv')
+	counts_quot = pd.read_csv(SPELLENG / 'spelleng_quote.csv')
+	counts_text = pd.read_csv(SPELLENG / 'spelleng_text.csv')
+	counts_freq = pd.read_csv(SPELLENG / 'spelleng_token.csv')
 
-	make_agreement_figure(counts_quot, counts_text, ROOT / 'manuscript' / 'figs' / 'agreement.pdf')
+	make_agreement_figure(counts_quot, counts_text, ROOT / 'manuscript' / 'figs' / 'agreement2.pdf')
 	# make_agreement_figure(counts_text, counts_freq, ROOT / 'manuscript' / 'figs' / 'agreement2.pdf')

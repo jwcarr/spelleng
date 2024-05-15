@@ -35,6 +35,8 @@ def freq_by_rank_plot(axis, freqs, title, color, label):
 def n_variants_plot(axis, number_of_variants, color, n, greater_than=8):
 	n_vars = [number_of_variants.count(i) / n for i in range(1, greater_than+1)]
 	n_vars = n_vars + [1 - sum(n_vars)]
+	axis.axvline(np.mean(number_of_variants), color='gray', label='mean', linestyle=':', linewidth=1)
+	axis.axvline(np.median(number_of_variants), color='mediumseagreen', label='median', linestyle=':', linewidth=1)
 	axis.bar(np.arange(1, greater_than+2), n_vars, color=color)
 	axis.set_xlim(0, greater_than+2)
 	axis.set_ylim(0, 1)
@@ -84,6 +86,8 @@ for j, band in enumerate(BROAD_BANDS):
 		axis.set_ylabel('Proportion of lemmata')
 	else:
 		axis.set_yticklabels([])
+	if j == 3:
+		axis.legend(frameon=False, markerfirst=False)
 
 
 axis = fig.add_subplot(grid_entr[0, 0])
@@ -93,7 +97,7 @@ text_entropy_by_band = []
 freq_entropy_by_band = []
 
 for band_i in range(1, 14):
-	band_header = f'band_{band_i}'
+	band_header = f'band{band_i}'
 	print(band_header)
 	quot_entropy_by_band.append(
 		count_quot.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
