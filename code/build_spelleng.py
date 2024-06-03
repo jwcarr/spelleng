@@ -127,6 +127,8 @@ if __name__ == '__main__':
 		part_of_speech = oed_data['part_of_speech']
 		stem = stemmer.stem(headword_form)
 		pronunciation = oed_data['pronunciation']
+		if pronunciation:
+			pronunciation = pronunciation.replace('ˈ', '').replace('ˌ', '')
 
 		if not WORD_REGEX.fullmatch(headword_form):
 			continue
