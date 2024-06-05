@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 import pandas as pd
 from utils import json_write
@@ -34,6 +35,12 @@ morpholex_word_errors = {
 	"<inter<(medi)>ory>": "intermediary",
 }
 
+
+prefix_extractor = re.compile(r'\<.+?\<')
+suffix_extractor = re.compile(r'\>.+?\>')
+root_extractor = re.compile(r'\(.+?\)')
+
+
 words = {}
 for index, row in merged_dataframe.iterrows():
 	word = row['Word']
@@ -43,7 +50,16 @@ for index, row in merged_dataframe.iterrows():
 		word = morpholex_word_errors[word]
 	for pos in row["POS"].split('|'):
 		word_id = f'{word}_{pos}'
-		words[word_id] = row['MorphoLexSegm']
+		segmentation = row['MorphoLexSegm'].replace('{', '').replace('}', '')
+		prefixes = [prefix.replace('<', '') for prefix in re.findall(prefix_extractor, segmentation)]
+		suffixes = [suffix.replace('>', '') for suffix in re.findall(suffix_extractor, segmentation)]
+		roots = [root.replace('(', '').replace(')', '') for root in re.findall(root_extractor, segmentation)]
+		data = {
+			'prefixes': prefixes,
+			'roots': roots,
+			'suffixes': suffixes,
+		}
+		words[word_id] = data
 
 words = {k: words[k] for k in sorted(list(words.keys()))}
 

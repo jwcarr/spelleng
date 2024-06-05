@@ -3,6 +3,10 @@ import re
 import pandas as pd
 import utils
 import oed_extract
+import warnings
+
+
+warnings.filterwarnings("ignore")
 
 
 ROOT = Path(__file__).parent.parent.resolve()
@@ -13,25 +17,43 @@ SPELLENG = ROOT / 'spelleng'
 spelleng = pd.read_csv(SPELLENG / 'spelleng_quote.csv')
 spelleng = spelleng.dropna(how='any')
 
+
 def find_words(target_spelling, target_pronuncation):
 	if isinstance(target_spelling, list):
 		target_spelling = '(' + '|'.join(target_spelling) + ')'
-	lemmata_ending_with_sound    = set(spelleng[spelleng['pronunciation'].str.contains(f'{target_pronuncation}$')]['lemma_id'].unique())
-	lemmata_ending_with_spelling = set(spelleng[spelleng['headword'].str.contains(f'{target_spelling}$')]['lemma_id'].unique())
-	print(f'Words that end /{target_pronuncation}/ but are not spelled <{target_spelling}>:')
-	print(sorted(list(lemmata_ending_with_sound - lemmata_ending_with_spelling)))
-	# print(f'Words that end <{target_spelling}> but are not pronounced /{target_pronuncation}/:')
-	# print(sorted(list(lemmata_ending_with_spelling - lemmata_ending_with_sound)))
+	lemmata_ending_with_sound    = set(spelleng[spelleng['pronunciation'].str.contains(target_pronuncation)]['lemma_id'].unique())
+	lemmata_ending_with_spelling = set(spelleng[spelleng['headword'].str.contains(target_spelling)]['lemma_id'].unique())
+	return sorted(list(lemmata_ending_with_sound - lemmata_ending_with_spelling))
 
-# find_words('ation', 'eɪʃə?n')
-# find_words('ship', 'ʃɪp')
-# find_words('ness', 'n(ᵻ|ɪ|ə)s')
-# find_words('y', 'i')
-# find_words(['ness', 'less', 'ous'], 'əs')
-# find_words('less', 'l(ᵻ|ɪ|ə)s')
-# find_words('ful', r'f\(?(ᵿ|ʊ)\)?l')
-find_words('able', 'əb\(?ə?\)?l')
 
+search_queries = [
+	('-Y', 'y$', r'i$'),
+	('-AL', 'al$', r'əl$'),
+	('-OUS', '(ness|less|ous)$', r'[^ɪ]əs$'),
+	('-IC', 'ic$', r'[^ʌe]ɪk$'),
+
+	('UN-', '^un', r'^ʌn'),
+	('DIS-', '^dis', r'^dɪs'),
+	('MIS-', '^mis', r'^m(ɪ|ᵻ)s'),
+
+	('-NESS', 'ness$', r'nəs$'),
+	('-LESS', 'less$', r'ləs$'),
+	('-FUL', 'ful$', r'f\(?(ᵿ|ʊ)\)?l$'),
+	('-ABLE', 'able$', r'əb\(?ə?\)?l$'),
+	('-MENT', 'ment$', r'mənt$'),
+	('-ITY', 'ity$', r'(ᵻ|ɪ|ə)ti$'),
+	('-SHIP', 'ship$', r'[^t]ʃɪp$'),
+	('-ATION', 'ation$', r'eɪʃə?n$'),
+]
+
+
+
+for affix, spelling, pronunciation in search_queries:
+	candidates = find_words(spelling, pronunciation)
+	print(affix)
+	print(f'Lemmata pronounced /{pronunciation}/ but not spelled <{spelling}>:')
+	print(', '.join(candidates))
+	print()
 
 
 
@@ -63,8 +85,8 @@ quit()
 
 
 
-affix_derivatives = utils.json_read(DATA / 'affix_derivatives.json')
+# affix_derivatives = utils.json_read(DATA / 'affix_derivatives.json')
 
-for affix, derivatives in affix_derivatives.items():
-	print(str(len(derivatives)).zfill(3), affix)
+# for affix, derivatives in affix_derivatives.items():
+# 	print(str(len(derivatives)).zfill(3), affix)
 	
