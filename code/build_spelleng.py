@@ -15,7 +15,7 @@ SPELLENG = ROOT / 'spelleng'
 LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
 
-CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj', 'adv': 'rb'}
+OED_TO_CLMET_POS_MAP = {'n': 'nn', 'v': 'vb', 'adj': 'jj', 'adv': 'rb'}
 
 BANDS = [
 	( 800,  950, "Old English (I & II)"),
@@ -74,7 +74,7 @@ def count_quotations(lemma, variants, quotation_data):
 
 def count_corpus(lemma_id, variants, quotation_data, corpus):
 	parsed_lemma_id = LEMMA_ID_PARSER.match(lemma_id)
-	pos = CLMET_POS_MAP[ parsed_lemma_id['pos'] ]
+	pos = OED_TO_CLMET_POS_MAP[ parsed_lemma_id['pos'] ]
 	variants_untagged = [f'{v}_' for v in variants]
 	variants_tagged = [f'{v}_{pos}' for v in variants]
 	counts_texts = np.zeros((len(variants), len(BANDS)), dtype=int)
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 		oed_data = utils.json_read(oed_data_path)
 
 		headword_form = oed_data['headword_form']
-		part_of_speech = oed_data['part_of_speech']
+		part_of_speech = OED_TO_CLMET_POS_MAP[ oed_data['part_of_speech'] ]
 		stem = stemmer.stem(headword_form)
 		pronunciation = oed_data['pronunciation']
 		if pronunciation:
