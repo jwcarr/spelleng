@@ -11,6 +11,22 @@ DATA = ROOT / 'data'
 
 BROAD_BANDS = {'OE': 'Old English', 'ME': 'Middle English', 'eME': 'Early Modern English', 'lME': 'Late Modern English'}
 
+BAND_LABELS = [
+	"Band 1\nPre-950",
+	"Band 2\n950–1049",
+	"Band 3\n1050–1149",
+	"Band 4\n1150–1249",
+	"Band 5\n1250–1349",
+	"Band 6\n1350–1419",
+	"Band 7\n1420–1499",
+	"Band 8\n1500–1569",
+	"Band 9\n1570–1639",
+	"Band 10\n1640–1709",
+	"Band 11\n1710–1779",
+	"Band 12\n1780–1849",
+	"Band 13\n1850–1919",
+]
+
 
 def entropy(freq_dist):
 	freq_dist = np.array(freq_dist)
@@ -49,7 +65,7 @@ count_text = pd.read_csv(ROOT / 'spelleng' / 'spelleng_text.csv')
 count_freq = pd.read_csv(ROOT / 'spelleng' / 'spelleng_token.csv')
 
 
-fig = plt.figure(figsize=(7.48, 5))
+fig = plt.figure(figsize=(7.48, 4.9))
 
 grid = gridspec.GridSpec(3, 4, figure=fig)
 grid_freq = gridspec.GridSpecFromSubplotSpec(1, 4, subplot_spec=grid[0, :])
@@ -117,11 +133,11 @@ axis.plot(range(1, 14), freq_entropy_by_band, '-o', color='crimson', label='$N$ 
 # axis.plot(range(1, 14), range(1, 14), '-o', color='darkorange', label='N corpus texts')
 # axis.plot(range(1, 14), range(1, 14), '-o', color='crimson', label='N corpus occurrences')
 
-axis.set_xlabel('Historical band')
+# axis.set_xlabel('Historical band')
 axis.set_ylabel('Mean variant entropy (bits)')
 
 axis.set_xticks(list(range(1, 14)))
-axis.set_xticklabels(list(range(1, 14)))
+axis.set_xticklabels(BAND_LABELS)
 axis.set_xlim(0.5, 13.5)
 axis.set_ylim(0, 1)
 
@@ -132,4 +148,4 @@ axis.axvline(10.5, color='gray', linewidth=0.5, linestyle='--')
 # axis.legend(frameon=False, markerfirst=False)
 
 fig.tight_layout(pad=0.5, h_pad=1.0, w_pad=2.0)
-fig.savefig(ROOT / 'manuscript' / 'figs' / 'entropy_plot.pdf')
+fig.savefig(ROOT / 'manuscript' / 'figs' / 'frequency_plot.pdf')
