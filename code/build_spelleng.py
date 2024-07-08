@@ -120,9 +120,6 @@ if __name__ == '__main__':
 
 		headword_form = oed_data['headword_form']
 		part_of_speech = OED_TO_CLMET_POS_MAP[ oed_data['part_of_speech'] ]
-		pronunciation = oed_data['pronunciation']
-		if pronunciation:
-			pronunciation = pronunciation.replace('ˈ', '').replace('ˌ', '')
 
 		if not WORD_REGEX.fullmatch(headword_form):
 			continue
