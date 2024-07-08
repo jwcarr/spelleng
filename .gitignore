@@ -3,6 +3,7 @@ spelleng/
 manuscript/
 private/
 
+data/models/
 data/corpora/clmet/
 data/corpora/HC_XML_Master_v9f.xml
 data/oed_cache/*.html
