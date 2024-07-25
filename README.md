@@ -1,21 +1,17 @@
-SpellEng
-========
+SpellEng: A diachronic database of English spelling variation
+=============================================================
 
-This repository contains data and code for the SpellEng database – a diachronic database of English spelling variation.
+This repository contains the SpellEng dataset and the associated code from our paper on frequency-dependent selection in the history of the English spelling system.
 
 
 tl;dr
 -----
 
-- If you just want to get your hands on a CSV file, see `data/exp.csv`
+- If you just want to get your hands on the SpellEng dataset, look in the `spelleng/` directory
 
-- If you want to look at the statistical models, see `code/fit_models.py`
+- If you want to look at the statistical model of frequency-dependent selection, see `code/model.py`
 
 - If you want to see how the figures were made, see `code/build_figures.py`
-
-- If you want to inspect the experiment code, see `experiment/server.js` and `experiment/client/client.js`
-
-- If you want to listen to the spoken word forms, see `experiment/client/words/`
 
 
 Organization
@@ -23,27 +19,29 @@ Organization
 
 The top-level structure of the repo is organized into:
 
-- `code/`: Python analysis code
+- `code/`: Python code for constructing SpellEng and running the model.
 
-- `data/`: JSON and CSV data files, and NetCDF model result archives
+- `data/`: Various JSON data files and NetCDF model result archives. The raw corpus files and extracted OED data are not committed to this public repository for copyright reasons.
 
-- `manuscript/`: LaTeX manuscript and figures
+- `manuscript/`: LaTeX manuscript and figures.
+
+- `spelleng/`: The SpellEng dataset in versioned ZIP archives.
 
 
-Replicating the analyses
-------------------------
+Replicating my Python environment
+---------------------------------
 
-To dive into full replication, I would recommend that you first replicate my Python 3.11 environment. First, clone or download this repository and `cd` into the top-level directory:
+To dive into full replication, I would recommend that you replicate my Python 3.11 environment. First, clone or download this repository and `cd` into the top-level directory:
 
 ```bash
-$ cd path/to/hethom/
+$ cd path/to/spelleng/
 ```
 
 The exact version numbers of the Python packages I used are documented in `requirements.txt`. To replicate this environment and ensure that the required packages do not interfere with your own projects, create and activate a new Python virtual environment. Here's one way to do this:
 
 ```bash
-$ python3 -m venv hethom_env
-$ source hethom_env/bin/activate
+$ python3 -m venv spelleng_env
+$ source spelleng_env/bin/activate
 ```
 
 With the new environment activated, install the required Python packages from `requirements.txt`:
@@ -54,21 +52,30 @@ $ pip install -r requirements.txt
 ```
 
 
-Reproducible analysis pipeline
-------------------------------
+Reproducing the SpellEng dataset
+--------------------------------
 
-All intermediate and processed data files are included in this repo, so it it not necessary to reproduce all these steps unless you need to. The raw data files produced by the experiment are located in `data/exp/`. This raw data went through the following pipeline:
+For copyright reasons, we have not included the raw corpus files and OED data in this public repository. If you want to replicate the dataset from scratch, you will first need to obtain this data.
 
-RAW DATA FILES -> process_exp_data.py -> EXP.JSON -> build_csv.py -> EXP.CSV -> fit_models.py -> \*.NETCDF -> build_figures.py
+The corpora can be obtained from https://helsinkicorpus.arts.gla.ac.uk and https://fedora.clarin-d.uni-saarland.de/clmet/clmet.html and should be placed in the `data/corpora/` directory. You will then be able to run the `code/build_corpus.py` script, which will produce a single unified corpus file (`data/corpus.json`).
 
-- `process_exp_data.py` reduces the raw data into a single JSON file that contains only the most important information (essentially just the lexicon produced by each generation, arranged into conditions and chains). If you need to access other data, you may need to refer to the raw files themselves.
+Once the corpus is built, you can optionally run the `code/select_lemmata.py` script, which performs the OED queries for selecting the lemmata. Cached OED search results are included in this repository (`data/oed_search_cache.json`), as is the list of lemmata itself (`data/lemmata.json`), so this step is not strictly necessary.
 
-- `build_csv.py` takes the JSON output of the previous step and run various measures, most importantly communicative cost. These results are output to a CSV file for analysis.
+To extract the OED spelling variant data, a subscription to the OED is required. Assuming you have this, you can run the `OED_extract.py` script from the command line, like so:
 
-- `fit_models.py` uses the CSV file generated in the previous step and fits the statistical models. The results are stored in NetCDF files under `data/models/`.
+```bash
+python code/oed_extract.py data/lemmata.json
+```
 
-- `build_figures.py` uses the data files generated in previous steps to create all the figures for the manuscript.
+This will work though all the lemmata (as selected in the previous step) in random order and distributed across multiple cores. For each lemma, the script will attempt to access the OED entry and it will cache the HTML to the `data/oed_cache/` directory. The HTML is then parsed and the extracted variants/quotations are written out to JSON files under `data/oed_data/`. This will take a long time to run and should not be done lightly, since it involves pulling several gigabytes of HTML from the OED.
 
+Once the OED data has been obtained, you can then run the `code/build_spelleng.py` script to create the SpellEng datasets for the quotation and corpus counts.
+
+
+Reproducing the model results
+-----------------------------
+
+A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/model.py`. Running the model will take some time (approx. 30 mins.), but we include NetCDF archives of our results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. To reproduce the plots from the NetCDF archives, run the `code/build_plots.py` script.
 
 
 Citing this work
