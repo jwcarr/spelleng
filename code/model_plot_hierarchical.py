@@ -40,27 +40,44 @@ PRIORS = {
 COLORS_BY_BAND = colormaps['viridis'](np.linspace(0, 1, 13))
 
 
-def time_plot(axis, trace, y_range=10):
-	# fig, axis = plt.subplots(1, 1, figsize=(7.48, 3))
-	axis.axhline(0, color='black', linewidth=0.8, linestyle='-')
-	x = np.linspace(-y_range, y_range, 300)
-	bands = np.arange(2, 14)
+def list_lemmata(trace):
+	bands = np.arange(11, 12)
 	for band_i in bands:
-		# μ_samples = trace.posterior[f'μ'].sel(band=band_i).to_numpy().flatten()
-		# μ_mean = μ_samples.mean()
-		# μ_hdi = az.hdi(μ_samples, hdi_prob=0.95)
-		# lower, upper = float(μ_hdi[0]), float(μ_hdi[1])
 		for n_variants in range(2, 9):
+			print(f'N variants {n_variants}')
 			try:
 				s_estimates = trace.posterior[f's_b{band_i}_n{n_variants}'].mean(('chain', 'draw')).to_numpy()
 			except KeyError:
 				continue
-			jitter = (np.random.random(len(s_estimates)) - 0.5) * 0.3
+			lemmata_indices_over_5 = np.where(s_estimates < -5)
+			labels = trace.posterior[f's_b{band_i}_n{n_variants}'].coords[f'lemma_b{band_i}_n{n_variants}'].values
+			print(labels[lemmata_indices_over_5])
+
+def time_plot(axis, trace, y_range=10):
+	axis.axhline(0, color='black', linewidth=0.8, linestyle='-')
+	x = np.linspace(-y_range, y_range, 300)
+	bands = np.arange(2, 14)
+	for band_i in bands:
+		μ_samples = trace.posterior[f'μ'].sel(band=band_i).to_numpy().flatten()
+		μ_mean = μ_samples.mean()
+		for n_variants in range(2, 9):
+
+			try:
+				y = trace.posterior[f's_b{band_i}_n{n_variants}'].mean(('chain', 'draw')).to_numpy()
+			except KeyError:
+				continue
+			jitter = (np.random.random(len(y)) - 0.5) * 0.3
 			x = jitter + band_i
-			y = s_estimates
 			axis.scatter(x, y, color=COLORS_BY_BAND[band_i - 2], s=1, alpha=0.2, edgecolor=None, linewidth=0)
-		# axis.scatter(band_i+0., μ_mean, color='crimson', s=6)
-		# axis.plot([band_i+0., band_i+0.], [lower, upper], color='crimson')
+
+			if band_i == 11 and n_variants == 4:
+				business_index = trace.posterior['s_b11_n4'].coords['lemma_b11_n4'].values.tolist().index('business_n')
+				axis.annotate(text='BUSINESS•N', xy=(x[business_index], y[business_index]), xytext=(9,8), arrowprops=dict(arrowstyle='->'))
+			if band_i == 11 and n_variants == 2:
+				precious_index = trace.posterior['s_b11_n2'].coords['lemma_b11_n2'].values.tolist().index('precious_adj')
+				axis.annotate(text='PRECIOUS•ADJ', xy=(x[precious_index], y[precious_index]), xytext=(9,-8), arrowprops=dict(arrowstyle='->'))
+
+		axis.scatter(band_i+0., μ_mean, color='black', s=6)
 	axis.axvline(3.5, color='gray', linewidth=0.5, linestyle='--')
 	axis.axvline(7.5, color='gray', linewidth=0.5, linestyle='--')
 	axis.axvline(10.5, color='gray', linewidth=0.5, linestyle='--')
@@ -69,8 +86,6 @@ def time_plot(axis, trace, y_range=10):
 	axis.set_ylabel('Selection bias ($s$)')
 	axis.set_xticks(bands)
 	axis.set_xticklabels(BAND_LABELS)
-	# fig.tight_layout()
-	# fig.savefig(output_file)
 
 def plot_posterior(axis, trace, param, xlim, by_band=False):
 	x = np.linspace(*xlim, 500)
@@ -124,18 +139,11 @@ def posterior_plot(trace, output_file):
 	fig.tight_layout()
 	fig.savefig(output_file)
 
-def plot_chains(trace):
-	all_lemmata = []
-	for b in range(2, 14):
-		for n in range(2, 8):
-			lemmata = trace.posterior.coords[f'lemma_b{b}_n{n}'].to_dict()['dims']
-
 
 if __name__ == '__main__':
 
 	trace = az.from_netcdf(f'../data/models/fds_token2.netcdf')
 
-	plot_chains(trace)
-
-	# time_plot(trace, f'../manuscript/figs/fds_estimates.pdf')
 	posterior_plot(trace, f'../manuscript/figs/fds_posterior.pdf')
+
+	# list_lemmata(trace)
