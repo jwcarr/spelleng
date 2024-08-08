@@ -142,7 +142,7 @@ def posterior_plot(trace, output_file):
 
 if __name__ == '__main__':
 
-	trace = az.from_netcdf(f'../data/models/fds_token2.netcdf')
+	trace = az.from_netcdf(f'../data/fds_model_results.netcdf')
 
 	posterior_plot(trace, f'../manuscript/figs/fds_posterior.pdf')
 
