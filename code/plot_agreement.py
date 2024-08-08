@@ -9,7 +9,6 @@ plt.rcParams.update({'font.sans-serif': 'Helvetica Neue', 'font.size': 7})
 
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
-SPELLENG = ROOT / 'spelleng'
 
 
 def determine_dominant_form(counts, variants):
@@ -66,9 +65,8 @@ def make_agreement_figure(counts_oed, counts_cor, output_file):
 
 if __name__ == '__main__':
 
-	counts_quot = pd.read_csv(SPELLENG / 'spelleng_quote.csv')
-	counts_text = pd.read_csv(SPELLENG / 'spelleng_text.csv')
-	counts_freq = pd.read_csv(SPELLENG / 'spelleng_token.csv')
+	counts_quot = pd.read_csv(DATA / 'spelleng_quote.csv')
+	counts_text = pd.read_csv(DATA / 'spelleng_text.csv')
+	counts_freq = pd.read_csv(DATA / 'spelleng_token.csv')
 
-	make_agreement_figure(counts_quot, counts_text, ROOT / 'manuscript' / 'figs' / 'agreement2.pdf')
-	# make_agreement_figure(counts_text, counts_freq, ROOT / 'manuscript' / 'figs' / 'agreement2.pdf')
+	make_agreement_figure(counts_quot, counts_text, ROOT / 'manuscript' / 'figs' / 'agreement.pdf')
