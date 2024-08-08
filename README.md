@@ -9,9 +9,7 @@ tl;dr
 
 - If you just want to get your hands on the SpellEng dataset, look in the `spelleng/` directory
 
-- If you want to look at the statistical model of frequency-dependent selection, see `code/fds_model.py`
-
-- If you want to see how the figures were made, see `code/build_figures.py`
+- If you want to inspect the statistical model of frequency-dependent selection, see `code/fds_model.py`
 
 
 Organization
@@ -19,9 +17,9 @@ Organization
 
 The top-level structure of the repo is organized into:
 
-- `code/`: Python code for constructing SpellEng and running the model.
+- `code/`: Python code for constructing SpellEng and reproducing the results reported in the paper.
 
-- `data/`: Various JSON data files and NetCDF model result archives. The raw corpus files and extracted OED data are not committed to this public repository for copyright reasons.
+- `data/`: Various data files. The raw corpus data and extracted OED data are not committed to this public repository for copyright reasons.
 
 - `manuscript/`: LaTeX manuscript and figures.
 
@@ -64,7 +62,7 @@ Once the corpus is built, you can optionally run the `code/select_lemmata.py` sc
 To extract the OED spelling variant data, a subscription to the OED is required. Assuming you have this, you can run the `OED_extract.py` script from the command line, like so:
 
 ```bash
-python code/oed_extract.py data/lemmata.json
+python code/oed_extract.py data/lemmata.json --n_cores 6
 ```
 
 This will work though all the lemmata (as selected in the previous step) in random order and distributed across multiple cores. For each lemma, the script will attempt to access the OED entry and it will cache the HTML to the `data/oed_cache/` directory. The HTML is then parsed and the extracted variants/quotations are written out to JSON files under `data/oed_data/`. This will take a long time to run and should not be done lightly, since it involves pulling several gigabytes of HTML from the OED.
@@ -72,10 +70,12 @@ This will work though all the lemmata (as selected in the previous step) in rand
 Once the OED data has been obtained, you can then run the `code/build_spelleng.py` script to create the SpellEng datasets for the quotation and corpus counts.
 
 
-Reproducing the model results
------------------------------
+Reproducing the quantitative results
+------------------------------------
 
 A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/fds_model.py`. Running the model will take some time (approx. 30 mins.), but we include a NetCDF archive of the model results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. Note that the NetCDF archive we provide is a reduced version of the complete model results, since the complete version is around 1.4GB. The reduced version does not include the log likelihood and all s estimates are reduced to a point value, which is sufficient for most purposes. To reproduce the plots from the NetCDF archive, run the `code/plot_fds_model.py` script.
+
+The other figures in the manuscript can be reproduced by running `code/plot_agreement.py`, `code/plot_frequency.py`, and `code/plot_entropy.py`.
 
 
 Citing this work
