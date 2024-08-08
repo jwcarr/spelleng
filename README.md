@@ -9,7 +9,7 @@ tl;dr
 
 - If you just want to get your hands on the SpellEng dataset, look in the `spelleng/` directory
 
-- If you want to look at the statistical model of frequency-dependent selection, see `code/model.py`
+- If you want to look at the statistical model of frequency-dependent selection, see `code/fds_model.py`
 
 - If you want to see how the figures were made, see `code/build_figures.py`
 
@@ -75,7 +75,7 @@ Once the OED data has been obtained, you can then run the `code/build_spelleng.p
 Reproducing the model results
 -----------------------------
 
-A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/model.py`. Running the model will take some time (approx. 30 mins.), but we include NetCDF archives of our results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. To reproduce the plots from the NetCDF archives, run the `code/build_plots.py` script.
+A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/fds_model.py`. Running the model will take some time (approx. 30 mins.), but we include NetCDF archives of our results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. To reproduce the plots from the NetCDF archives, run the `code/build_plots.py` script.
 
 
 Citing this work
