@@ -32,14 +32,14 @@ def print_corpus_counts():
 def print_spelleng_counts():
 	spelleng = pd.read_csv(SPELLENG / 'spelleng_quote.csv')
 	n_lemmata = spelleng['lemma_id'].nunique()
-	n_nouns = spelleng[ spelleng['pos'] == 'n' ]['lemma_id'].nunique()
-	n_adjectives = spelleng[ spelleng['pos'] == 'adj' ]['lemma_id'].nunique()
-	n_verbs = spelleng[ spelleng['pos'] == 'v' ]['lemma_id'].nunique()
-	n_adverbs = spelleng[ spelleng['pos'] == 'adv' ]['lemma_id'].nunique()
+	n_nouns = spelleng[ spelleng['pos'] == 'nn' ]['lemma_id'].nunique()
+	n_adjectives = spelleng[ spelleng['pos'] == 'jj' ]['lemma_id'].nunique()
+	n_verbs = spelleng[ spelleng['pos'] == 'vb' ]['lemma_id'].nunique()
+	n_adverbs = spelleng[ spelleng['pos'] == 'rb' ]['lemma_id'].nunique()
 	print(n_lemmata, n_nouns, n_adjectives, n_verbs, n_adverbs)
 
 
 if __name__ == '__main__':
 	
-	# print_corpus_counts()
+	print_corpus_counts()
 	print_spelleng_counts()
