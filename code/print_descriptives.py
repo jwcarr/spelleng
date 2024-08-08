@@ -5,7 +5,6 @@ import utils
 
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
-SPELLENG = ROOT / 'spelleng'
 
 
 def print_corpus_counts():
@@ -30,7 +29,7 @@ def print_corpus_counts():
 
 
 def print_spelleng_counts():
-	spelleng = pd.read_csv(SPELLENG / 'spelleng_quote.csv')
+	spelleng = pd.read_csv(DATA / 'spelleng_quote.csv')
 	n_lemmata = spelleng['lemma_id'].nunique()
 	n_nouns = spelleng[ spelleng['pos'] == 'nn' ]['lemma_id'].nunique()
 	n_adjectives = spelleng[ spelleng['pos'] == 'jj' ]['lemma_id'].nunique()
