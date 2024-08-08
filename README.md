@@ -75,7 +75,7 @@ Once the OED data has been obtained, you can then run the `code/build_spelleng.p
 Reproducing the model results
 -----------------------------
 
-A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/fds_model.py`. Running the model will take some time (approx. 30 mins.), but we include NetCDF archives of our results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. To reproduce the plots from the NetCDF archives, run the `code/build_plots.py` script.
+A PyMC implementation of our Bayesian model of frequency-dependent selection can be found in `code/fds_model.py`. Running the model will take some time (approx. 30 mins.), but we include a NetCDF archive of the model results in this repository, so it's not strictly necessary to rerun the model unless you want to tweak it. Note that the NetCDF archive we provide is a reduced version of the complete model results, since the complete version is around 1.4GB. The reduced version does not include the log likelihood and all s estimates are reduced to a point value, which is sufficient for most purposes. To reproduce the plots from the NetCDF archive, run the `code/plot_fds_model.py` script.
 
 
 Citing this work
