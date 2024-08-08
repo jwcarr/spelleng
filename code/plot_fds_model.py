@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import arviz as az
 import matplotlib.pyplot as plt
@@ -5,7 +6,12 @@ import matplotlib.gridspec as gridspec
 from matplotlib import colormaps
 from scipy import stats
 
+
 plt.rcParams.update({'font.sans-serif': 'Helvetica Neue', 'font.size': 7})
+
+
+ROOT = Path(__file__).parent.parent.resolve()
+DATA = ROOT / 'data'
 
 DIST = {
 	'normal': stats.norm,
@@ -46,7 +52,9 @@ def list_lemmata(trace):
 		for n_variants in range(2, 9):
 			print(f'N variants {n_variants}')
 			try:
-				s_estimates = trace.posterior[f's_b{band_i}_n{n_variants}'].mean(('chain', 'draw')).to_numpy()
+				y = trace.posterior[f's_b{band_i}_n{n_variants}'].mean(('chain', 'draw')).to_numpy()
+			except ValueError:
+				y = trace.posterior[f's_b{band_i}_n{n_variants}'].to_numpy()
 			except KeyError:
 				continue
 			lemmata_indices_over_5 = np.where(s_estimates < -5)
@@ -64,8 +72,11 @@ def time_plot(axis, trace, y_range=10):
 
 			try:
 				y = trace.posterior[f's_b{band_i}_n{n_variants}'].mean(('chain', 'draw')).to_numpy()
+			except ValueError:
+				y = trace.posterior[f's_b{band_i}_n{n_variants}'].to_numpy()
 			except KeyError:
 				continue
+
 			jitter = (np.random.random(len(y)) - 0.5) * 0.3
 			x = jitter + band_i
 			axis.scatter(x, y, color=COLORS_BY_BAND[band_i - 2], s=1, alpha=0.2, edgecolor=None, linewidth=0)
@@ -142,8 +153,8 @@ def posterior_plot(trace, output_file):
 
 if __name__ == '__main__':
 
-	trace = az.from_netcdf(f'../data/fds_model_results.netcdf')
+	trace = az.from_netcdf(DATA / 'fds_model_results_reduced.netcdf')
 
-	posterior_plot(trace, f'../manuscript/figs/fds_posterior.pdf')
+	posterior_plot(trace, ROOT / 'manuscript' / 'figs' / 'fds_posterior.pdf')
 
 	# list_lemmata(trace)

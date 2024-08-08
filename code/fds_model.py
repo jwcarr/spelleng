@@ -73,14 +73,7 @@ if __name__ == '__main__':
 	assert not output_file.exists()
 
 	# Load data and get frequency matrices
-	dataset = pd.read_csv(dataset_file)
-
-
-	# dataset = pd.read_csv('../spelleng/spelleng_quote.csv', keep_default_na=False)
-	# dft = pd.read_csv('../spelleng/spelleng_text.csv', keep_default_na=False)
-	# for band_i in range(1, 14):
-	# 	dataset[f'band{band_i}'] = dataset[f'band{band_i}'] + dft[f'band{band_i}']
-
+	dataset = pd.read_csv(dataset_file, keep_default_na=False)
 
 	data_by_band = [
 		make_frequency_matrices(
@@ -121,7 +114,13 @@ if __name__ == '__main__':
 		trace = pm.sample(tune=1000, draws=1000, chains=6, cores=6, target_accept=0.9)
 		pm.compute_log_likelihood(trace)
 
-	# Reduce all the s estimates to point values to reduce file size
-	# trace.posterior['s'] = trace.posterior['s'].mean(('chain', 'draw'))
-
 	trace.to_netcdf(output_file)
+
+	# Create a second copy of the trace with the log likehood removed and the
+	# s estimates reduced to point values. This copy will be committed to the
+	# public repo, since the complete trace is very large (~1.4GB).
+	del trace.log_likelihood
+	for b, matrices_by_n_variants in enumerate(data_by_band, 2):
+		for n, (lemma_ids, F, G) in matrices_by_n_variants.items():
+			trace.posterior[f's_b{b}_n{n}'] = trace.posterior[f's_b{b}_n{n}'].mean(('chain', 'draw'))
+	trace.to_netcdf(output_file.with_stem(f'{output_file.stem}_reduced'))
