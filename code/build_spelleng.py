@@ -9,7 +9,6 @@ import pandas as pd
 ROOT = Path(__file__).parent.parent.resolve()
 DATA = ROOT / 'data'
 OED_DATA = DATA / 'oed_data'
-SPELLENG = ROOT / 'spelleng'
 
 LEMMA_ID_PARSER = re.compile(r'(?P<id>(?P<form>\w+)_(?P<pos>[a-z]+)\d?)')
 WORD_REGEX = re.compile(r'[abcdefghijklmnopqrstuvwxyzæðþęłȝꝥ]+')
@@ -32,7 +31,7 @@ BANDS = [
 	(1850, 1920, "Late Modern English (III)"),
 ]
 
-BROAD_BANDS = {'OE': [1, 2, 3, 4], 'ME': [5, 6, 7], 'eME': [8, 9, 10], 'lME': [11, 12, 13]}
+BROAD_BANDS = {'oe': [1, 2, 3, 4], 'me': [5, 6, 7], 'eme': [8, 9, 10], 'lme': [11, 12, 13]}
 
 
 def determine_band(year):
@@ -144,12 +143,12 @@ if __name__ == '__main__':
 
 	quotation_dataset = pd.concat(dataframes_quot, ignore_index=True)
 	add_broad_band_counts(quotation_dataset)
-	quotation_dataset.to_csv(SPELLENG / 'spelleng_quote.csv', index=False)
+	quotation_dataset.to_csv(DATA / 'spelleng_quote.csv', index=False)
 
 	corpus_dataset = pd.concat(dataframes_text, ignore_index=True)
 	add_broad_band_counts(corpus_dataset)
-	corpus_dataset.to_csv(SPELLENG / 'spelleng_text.csv', index=False)
+	corpus_dataset.to_csv(DATA / 'spelleng_text.csv', index=False)
 
 	corpus_dataset = pd.concat(dataframes_tokn, ignore_index=True)
 	add_broad_band_counts(corpus_dataset)
-	corpus_dataset.to_csv(SPELLENG / 'spelleng_token.csv', index=False)
+	corpus_dataset.to_csv(DATA / 'spelleng_token.csv', index=False)
