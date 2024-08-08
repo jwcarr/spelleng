@@ -48,7 +48,7 @@ EXPECTED_COUNTS = {
 	'coquettish_adj': {'coquetish': 1, 'coquettish': 8},
 	'creel_n1': {'crail': 0, 'creel': 10, 'creele': 1, 'creil': 0, 'creill': 1, 'creille': 0, 'crele': 1, 'crelle': 1, 'kreil': 0, 'krele': 0},
 
-	# # ROUND 3
+	# ROUND 3
 	'life_n': {'hlif': 0, 'layf': 0, 'layffe': 0, 'lef': 0, 'lefe': 0, 'leif': 0, 'leife': 0, 'leive': 0, 'leue': 1, 'leyf': 0, 'lief': 5, 'liefe': 0, 'lieff': 0, 'lieiw': 0, 'lieve': 0, 'lif': 41, 'life': 687, 'liff': 2, 'liffe': 1, 'liif': 1, 'lijf': 7, 'lijfe': 0, 'liue': 18, 'liuf': 0, 'live': 0, 'liyf': 0, 'liyffe': 0, 'lyef': 0, 'lyefe': 0, 'lyeff': 0, 'lyf': 20, 'lyfe': 24, 'lyff': 4, 'lyffe': 3, 'lyfve': 0, 'lyif': 0, 'lyife': 0, 'lyiff': 0, 'lyue': 9, 'lyve': 0, 'lywe': 0, 'lyyf': 0},
 	'leave_v1': {'hlæfan': 0, 'lae': 0, 'laeve': 0, 'laif': 0, 'laiff': 0, 'laiue': 0, 'laive': 0, 'laue': 0, 'lave': 1, 'lawe': 0, 'lay': 0, 'layf': 0, 'layve': 0, 'le': 0, 'lea': 0, 'leab': 0, 'leabe': 0, 'leaf': 0, 'leafe': 0, 'leaff': 0, 'leaue': 47, 'leav': 1, 'leave': 246, 'leavy': 0, 'leawe': 0, 'lebe': 0, 'lee': 0, 'leeav': 0, 'leeave': 0, 'leef': 3, 'leefe': 0, 'leeue': 1, 'leeve': 2, 'lef': 7, 'lefe': 2, 'leff': 1, 'leffe': 1, 'lefue': 0, 'lefve': 0, 'leif': 4, 'leife': 0, 'leiff': 0, 'leiue': 0, 'leiv': 0, 'leive': 0, 'leiwe': 0, 'leov': 0, 'leue': 36, 'lev': 0, 'leve': 7, 'levin': 0, 'lewe': 0, 'lewiff': 0, 'ley': 0, 'leyf': 0, 'leyfe': 0, 'leyff': 0, 'leyffe': 0, 'leyiff': 0, 'leyve': 1, 'li': 0, 'liave': 0, 'lieav': 0, 'lief': 0, 'lieff': 0, 'liue': 0, 'live': 0, 'liwe': 0, 'loave': 0, 'luf': 0, 'luif': 0, 'lye': 0, 'lyue': 0, 'lyve': 0, 'læfan': 0, 'læfe': 0, 'læue': 0},
 	'open_adj': {'aipen': 0, 'apen': 0, 'apin': 0, 'apne': 0, 'appen': 0, 'appin': 0, 'appne': 0, 'appyn': 0, 'hopen': 0, 'hoppyne': 0, 'hopun': 0, 'hopyn': 0, 'hopyne': 0, 'hopynne': 0, 'oopen': 0, 'open': 545, 'opene': 7, 'openn': 0, 'openne': 0, 'opin': 5, 'opine': 1, 'opinn': 0, 'opne': 0, 'opon': 3, 'opone': 0, 'opoun': 2, 'oppen': 1, 'oppin': 6, 'oppine': 1, 'oppon': 1, 'oppyn': 2, 'oppyne': 0, 'opun': 0, 'opune': 0, 'opvn': 0, 'opyn': 12, 'opyne': 1, 'opynne': 0, 'upon': 1, 'vpen': 0, 'vpon': 1, 'vppin': 0},
@@ -73,7 +73,7 @@ EXPECTED_COUNTS = {
 	'chill_adj': {'chele': 0, 'chil': 1, 'chill': 24, 'chyll': 1, 'shill': 1, 'schill': 1, 'schil': 0},
 	'sarcophagus_n': {'sarcofagus': 1, 'sarcophagus': 10},
 
-	# # ROUND 4
+	# ROUND 4
 	'common_adj': {'coamon': 0, 'coman': 0, 'comen': 2, 'comin': 0, 'commen': 3, 'commene': 0, 'commin': 0, 'commine': 0, 'common': 217, 'commond': 0, 'commonde': 0, 'commone': 0, 'commonne': 0, 'commoun': 0, 'commound': 0, 'commoune': 1, 'commovne': 0, 'commown': 0, 'commowne': 0, 'commun': 4, 'commund': 0, 'commune': 7, 'commuyn': 1, 'commwn': 0, 'commyn': 1, 'commyne': 0, 'comon': 5, 'comone': 1, 'comonne': 0, 'comont': 0, 'comoun': 5, 'comound': 0, 'comoune': 0, 'comovn': 0, 'comovne': 0, 'comown': 0, 'comowne': 0, 'comun': 7, 'comune': 5, 'comuyn': 0, 'comvne': 1, 'comvwne': 0, 'comvyne': 0, 'comyn': 18, 'comyne': 1, 'comynne': 0, 'coummon': 0, 'covmon': 0, 'cowman': 0, 'cowmane': 0, 'cowmmoune': 0, 'cowmon': 0, 'cowmond': 0, 'cowmone': 0, 'cowmoun': 0, 'cowmoune': 0, 'cowmownd': 0, 'komune': 1, 'quomon': 0},
 	'idea_n': {'aideah': 0, 'idaea': 0, 'idaia': 0, 'idaya': 0, 'idea': 160, 'ideah': 0, 'idear': 0, 'ideer': 0, 'ideie': 1, 'ydea': 1, 'ydeye': 0},
 	'result_n': {'resaltt': 1, 'result': 36},
@@ -100,7 +100,7 @@ EXPECTED_COUNTS = {
 	'hostel_n1': {'hostel': 11, 'hostell': 5, 'hostelle': 0, 'hostil': 1, 'hostle': 0, 'osteill': 1, 'ostel': 3, 'ostell': 0, 'osteyl': 0, 'ostle': 1},
 	'avouch_v': {'advouch': 0, 'auoch': 0, 'auouch': 6, 'auouche': 2, 'auowch': 1, 'avouch': 16, 'avouche': 1},
 	
-	# # ROUND 5
+	# ROUND 5
 	'home_n1': {'am': 0, 'haam': 0, 'haem': 0, 'haim': 0, 'haime': 0, 'ham': 18, 'hame': 9, 'haym': 0, 'hayme': 0, 'heam': 0, 'heame': 0, 'heaum': 0, 'heeam': 0, 'heem': 0, 'hehym': 0, 'heim': 0, 'heime': 0, 'hem': 0, 'heme': 0, 'heyem': 0, 'heyime': 0, 'hiam': 0, 'him': 0, 'hime': 0, 'hoam': 0, 'hoame': 0, 'hom': 9, 'home': 430, 'hooam': 0, 'hoom': 2, 'hoome': 2, 'howm': 0, 'howme': 0, 'hum': 0, 'hume': 0, 'hwom': 0, 'hwome': 0, 'hwum': 0, 'hyem': 0, 'hyim': 0, 'hyimm': 0, 'hyme': 0, 'om': 0, 'whoam': 0, 'whoame': 0, 'whom': 1, 'whome': 1, 'whum': 0, 'wom': 0, 'yam': 0, 'yem': 0},
 	'interest_n': {'enterest': 0, 'entrest': 1, 'interest': 142, 'intrest': 0, 'intrust': 0, 'interrest': 0, 'yntrest': 1, 'intriste': 0, 'jnterest': 0, 'jntrest': 0},
 	'instance_n': {'instance': 53, 'instans': 0, 'instaunce': 6, 'instauns': 1},
@@ -124,7 +124,7 @@ EXPECTED_COUNTS = {
 	'precocity_n': {'precocitie': 1, 'precocity': 15, 'precositie': 0, 'precosity': 0},
 	'mero_n': {'mero': 3, 'merou': 1},
 
-	# # ROUND 6
+	# ROUND 6
 	'doubt_v': {'doubt': 22},
 	'confess_v': {'confese': 1, 'confess': 37, 'confesse': 32, 'confessen': 2},
 	'short_adj': {'chort': 0, 'sceort': 1, 'scheort': 0, 'schert': 1, 'schort': 25, 'schorte': 6, 'schorth': 1, 'schorthe': 1, 'schortt': 0, 'scort': 3, 'shert': 0, 'shorrt': 0, 'short': 610, 'shorte': 30, 'shortt': 0, 'sort': 0, 'sorte': 0, 'ssort': 2},
@@ -154,7 +154,7 @@ EXPECTED_COUNTS = {
 	'ellipsis_n': {'elipsis': 0, 'elleipsis': 0, 'ellipsis': 10, 'illipsis': 1},
 	'conversazione_n': {'conversatione': 0, 'conversazione': 6},
 
-	# # ROUND 7
+	# ROUND 7
 	'take_v': {'ta': 21, 'taa': 0, 'taak': 1, 'taake': 1, 'taas': 0, 'taayke': 0, 'tac': 5, 'tacan': 2, 'tace': 1, 'tack': 1, 'tacke': 0, 'tae': 0, 'taen': 1, 'taick': 0, 'taigh': 0, 'taik': 0, 'taike': 2, 'tais': 0, 'taiuk': 0, 'tak': 45, 'take': 1894, 'taken': 410, 'takenn': 14, 'takk': 0, 'takke': 0, 'talke': 1, 'tan': 10, 'tane': 7, 'tas': 5, 'tase': 2, 'tasse': 0, 'tatȝ': 0, 'tauk': 0, 'tay': 2, 'tayk': 0, 'tays': 0, 'teak': 1, 'teake': 0, 'teayk': 0, 'teck': 1, 'tee': 0, 'teeak': 2, 'teik': 0, 'tek': 5, 'tekky': 0, 'teuk': 0, 'tey': 0, 'teyk': 0, 'theayk': 0, 'tick': 0, 'tik': 0, 'tike': 0, 'to': 64, 'too': 0, 'tooneth': 0, 'totȝ': 0, 'tuk': 1, 'ty': 0, 'tyek': 0, 'tæce': 0},
 	'grace_n': {'crace': 0, 'garace': 0, 'graace': 0, 'graas': 0, 'grace': 396, 'gracy': 0, 'graice': 0, 'grais': 0, 'graise': 0, 'gras': 3, 'grase': 2, 'grass': 0, 'grays': 0, 'graz': 0, 'graze': 0, 'greace': 0, 'grease': 0, 'greeas': 0, 'greease': 0, 'gres': 0},
 	'worth_n1': {'uort': 0, 'virth': 0, 'vord': 0, 'vorth': 0, 'vortht': 0, 'vyrt': 0, 'warth': 0, 'weord': 0, 'weorð': 2, 'weorþ': 0, 'weorþe': 2, 'werthe': 1, 'werþe': 2, 'wiorð': 0, 'wiorþ': 0, 'wirth': 0, 'woorth': 3, 'woorthe': 0, 'worcht': 0, 'worrth': 0, 'worth': 145, 'worthe': 11, 'wortht': 0, 'wortth': 0, 'worz': 0, 'worð': 0, 'worþ': 5, 'worȝ': 1, 'wourcht': 0, 'wourth': 0, 'wourthe': 0, 'wrocht': 0, 'wrth': 0, 'wurd': 0, 'wurth': 0, 'wurthe': 1, 'wurð': 2, 'wurþ': 1, 'wyrth': 0, 'wyrtht': 0, 'wyrð': 0, 'wyrþ': 0},
