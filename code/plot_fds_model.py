@@ -63,7 +63,6 @@ def list_lemmata(trace):
 
 def time_plot(axis, trace, y_range=10):
 	axis.axhline(0, color='black', linewidth=0.8, linestyle='-')
-	x = np.linspace(-y_range, y_range, 300)
 	bands = np.arange(2, 14)
 	for band_i in bands:
 		μ_samples = trace.posterior[f'μ'].sel(band=band_i).to_numpy().flatten()
@@ -79,7 +78,7 @@ def time_plot(axis, trace, y_range=10):
 
 			jitter = (np.random.random(len(y)) - 0.5) * 0.3
 			x = jitter + band_i
-			axis.scatter(x, y, color=COLORS_BY_BAND[band_i - 2], s=1, alpha=0.2, edgecolor=None, linewidth=0)
+			axis.scatter(x, y, color=COLORS_BY_BAND[band_i - 2], s=1, alpha=0.2, edgecolor=None, linewidth=0, rasterized=True)
 
 			if band_i == 11 and n_variants == 4:
 				business_index = trace.posterior['s_b11_n4'].coords['lemma_b11_n4'].values.tolist().index('business_n')
@@ -99,7 +98,7 @@ def time_plot(axis, trace, y_range=10):
 	axis.set_xticklabels(BAND_LABELS)
 
 def plot_posterior(axis, trace, param, xlim, by_band=False):
-	x = np.linspace(*xlim, 500)
+	x = np.linspace(*xlim, 1000)
 	if by_band:
 		for band_i in range(2, 14):
 			μ_samples = trace.posterior[param].sel(band=band_i).to_numpy().flatten()
@@ -121,12 +120,12 @@ def plot_posterior(axis, trace, param, xlim, by_band=False):
 	axis.set_xlabel(f'${param}$')
 
 def plot_prior(axis, trace, param, xlim, prior_parameterization):
-	x = np.linspace(*xlim, 500)
+	x = np.linspace(*xlim, 1000)
 	dist = DIST[prior_parameterization[0]](*prior_parameterization[1])
 	y = dist.pdf(x)
 	axis.plot(x, y, color='gray', linestyle='--', linewidth=1)
 
-def posterior_plot(trace, output_file):
+def posterior_plot_full(trace, output_file):
 	fig = plt.figure(figsize=(7.48, 7))
 	gs = gridspec.GridSpec(3, 4, figure=fig, height_ratios=[2, 1.2, 0.8])
 
@@ -151,9 +150,21 @@ def posterior_plot(trace, output_file):
 	fig.savefig(output_file)
 
 
+def posterior_plot(trace, output_file):
+	fig, axes = plt.subplots(2, 1, figsize=(7.48, 5), height_ratios=[2, 1.2])
+	time_plot(axes[0], trace)
+	plot_posterior(axes[1], trace, 'μ', (-2, 2), True)
+	axes[1].set_xlabel('Mean selection bias ($μ$)')
+	axes[1].set_ylabel('Posterior density')
+	fig.tight_layout()
+	fig.savefig(output_file, dpi=600)
+
+
 if __name__ == '__main__':
 
 	trace = az.from_netcdf(DATA / 'fds_model_results_reduced.netcdf')
+
+	# posterior_plot_full(trace, ROOT / 'manuscript' / 'figs' / 'fds_posterior_full.pdf')
 
 	posterior_plot(trace, ROOT / 'manuscript' / 'figs' / 'fds_posterior.pdf')
 
