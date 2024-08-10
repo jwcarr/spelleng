@@ -42,7 +42,7 @@ def determine_band(year):
 
 def create_dataframe(lemma, headword_form, part_of_speech, variants, counts):
 	data = {
-		'lemma_id': [lemma] * len(variants),
+		'lemma': [lemma] * len(variants),
 		'headword': [headword_form] * len(variants),
 		'pos': [part_of_speech] * len(variants),
 		'variant': variants,

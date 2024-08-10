@@ -12,7 +12,7 @@ def make_frequency_matrices(df, band, min_count, max_variants, additive_smoothin
 	# 1 and time 2. In the number of variants is greater than max_variants,
 	# take only the n most frequent variants.
 	lemmata_data = []
-	for lemma_id, subset in df.groupby('lemma_id'):
+	for lemma_id, subset in df.groupby('lemma'):
 		f = subset[f'band{band}'].to_numpy()
 		g = subset[f'band{band - 1}'].to_numpy(dtype=float)
 		if g.sum() < min_count or f.sum() < min_count:

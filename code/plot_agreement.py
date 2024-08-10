@@ -38,9 +38,9 @@ def calculate_agreement(counts1, counts2, variants):
 	return n_bands_in_agreement
 
 def make_agreement_figure(counts_oed, counts_cor, output_file):
-	lemmata = counts_oed['lemma_id'].unique()
-	counts_oed = counts_oed.groupby('lemma_id')
-	counts_cor = counts_cor.groupby('lemma_id')
+	lemmata = counts_oed['lemma'].unique()
+	counts_oed = counts_oed.groupby('lemma')
+	counts_cor = counts_cor.groupby('lemma')
 	agreements = []
 	for i, lemma in enumerate(lemmata):
 		if i % 1000 == 0:

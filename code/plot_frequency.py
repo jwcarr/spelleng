@@ -46,9 +46,9 @@ def plot_frequency(output_file):
 
 		axis = axes[0, j]
 
-		quot_totals = count_quot.groupby('lemma_id')[band].sum().to_numpy()
-		text_totals = count_text.groupby('lemma_id')[band].sum().to_numpy()
-		freq_totals = count_freq.groupby('lemma_id')[band].sum().to_numpy()
+		quot_totals = count_quot.groupby('lemma')[band].sum().to_numpy()
+		text_totals = count_text.groupby('lemma')[band].sum().to_numpy()
+		freq_totals = count_freq.groupby('lemma')[band].sum().to_numpy()
 
 		freq_by_rank_plot(axis, quot_totals, BROAD_BANDS[band], 'cadetblue', 'quotation count')
 		freq_by_rank_plot(axis, text_totals, BROAD_BANDS[band], 'darkorange', 'text count')
@@ -63,8 +63,8 @@ def plot_frequency(output_file):
 		axis = axes[1, j]
 
 		combined_count = count_quot + count_text
-		quot_nvars = combined_count[ combined_count[band] > 0 ].groupby('lemma_id')[band].count().to_list()
-		n_lemmata_quot = len(combined_count[ combined_count[band] > 0 ]['lemma_id'].unique())
+		quot_nvars = combined_count[ combined_count[band] > 0 ].groupby('lemma')[band].count().to_list()
+		n_lemmata_quot = len(combined_count[ combined_count[band] > 0 ]['lemma'].unique())
 		n_variants_plot(axis, quot_nvars, 'black', n_lemmata_quot)
 
 		if j == 0:

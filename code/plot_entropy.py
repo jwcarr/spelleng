@@ -46,13 +46,13 @@ def plot_entropy(output_file):
 		band_header = f'band{band_i}'
 		print(band_header)
 		quot_entropy_by_band.append(
-			count_quot.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
+			count_quot.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 		)
 		text_entropy_by_band.append(
-			count_text.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
+			count_text.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 		)
 		freq_entropy_by_band.append(
-			count_freq.groupby('lemma_id')[band_header].apply(lambda x: entropy(x)).mean()
+			count_freq.groupby('lemma')[band_header].apply(lambda x: entropy(x)).mean()
 		)
 
 	axis.plot(range(1, 14), quot_entropy_by_band, '-o', color='cadetblue', label='quotation count')
