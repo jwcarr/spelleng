@@ -1,13 +1,13 @@
-SpellEng: A diachronic database of English spelling variation
-=============================================================
+Frequency-dependent selection in the English spelling system across 1000 years of history
+=========================================================================================
 
-This repository contains the SpellEng dataset and the associated code from our paper on frequency-dependent selection in the history of the English spelling system.
+This repository contains the SpellEng dataset and the associated code from our paper on frequency-dependent selection in the history of the English spelling system. [A preprint is currently available here](https://doi.org/10.31234/osf.io/kaqgf).
 
 
 tl;dr
 -----
 
-- If you just want to get your hands on the SpellEng dataset, look in the `spelleng/` directory
+- If you just want to get your hands on the SpellEng dataset, download [`spelleng/spelleng_v1.zip`](https://github.com/jwcarr/spelleng/raw/main/spelleng/spelleng_v1.zip)
 
 - If you want to inspect the statistical model of frequency-dependent selection, see `code/fds_model.py`
 
@@ -81,16 +81,18 @@ The other figures in the manuscript can be reproduced by running `code/plot_agre
 Citing this work
 ----------------
 
-Carr, J. W., & Rastle, K. (2024). Frequency-dependent selection in the English spelling system across 1000 years of history.
+This work is currently under review, but for now you can cite the following preprint:
+
+Carr, J. W., & Rastle, K. (2024). Frequency-dependent selection in the English spelling system
+across 1000 years of history. *PsyArXiv*. Version 1. https://doi.org/10.31234/osf.io/kaqgf
 
 ```bibtex
 @article{Carr:2024,
-author = {Carr, Jon W and Rastle, Kathleen},
-title = {Frequency-dependent selection in the English spelling system across 1000 years of history},
-journal = {},
-year = {},
-volume = {},
-pages = {},
-doi = {}
+  author = {Carr, Jon W and Rastle, Kathleen},
+  title = {Frequency-Dependent Selection in the {English} Spelling System across 1000 Years of History},
+  journal = {PsyArXiv},
+  year = {2024},
+  pages = {Version 1},
+  doi = {10.31234/osf.io/kaqgf}
 }
 ```
