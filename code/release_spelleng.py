@@ -29,8 +29,8 @@ if __name__ == '__main__':
 		ROOT / 'data' / 'spelleng_quote.csv',
 		ROOT / 'data' / 'spelleng_text.csv',
 		ROOT / 'data' / 'spelleng_token.csv',
-		ROOT / 'private' / 'readme.md',
-		ROOT / 'private' / 'license.md',
+		ROOT / 'spelleng' / 'readme.md',
+		ROOT / 'spelleng' / 'license.md',
 	]
 
 	output_dir = ROOT / 'spelleng'
