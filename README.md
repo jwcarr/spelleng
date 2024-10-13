@@ -34,27 +34,27 @@ Replicating my Python environment
 To dive into full replication, I would recommend that you replicate my Python environment. First, clone or download this repository and `cd` into the top-level directory:
 
 ```bash
-$ cd path/to/spelleng/
+cd path/to/spelleng/
 ```
 
 The codebase was last tested in Python 3.12.7 with the package versions documented in `requirements.txt`. To replicate this environment and ensure that the required packages do not interfere with your own projects, create and activate a new Python virtual environment. Here's one way to do this:
 
 ```bash
-$ python3 -m venv spelleng_env
-$ source spelleng_env/bin/activate
+python3 -m venv spelleng_env
+source spelleng_env/bin/activate
 ```
 
 With the new environment activated, install the required Python packages from `requirements.txt`:
 
 ```bash
-$ pip install --upgrade pip
-$ pip install -r requirements.txt
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 If you're living in the future and can't get these old package versions installed, you could try installing the latest versions of the minimal set of packages:
 
 ```bash
-$ pip install numpy scipy pandas matplotlib pymc arviz requests beautifulsoup4 lxml
+pip install numpy scipy pandas matplotlib pymc arviz requests beautifulsoup4 lxml
 ```
 
 
